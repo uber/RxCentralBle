@@ -1,0 +1,39 @@
+language: android
+
+android:
+  components:
+    - tools
+    - platform-tools                    # Platform tools
+    - build-tools-27.0.2
+    - extra-android-support
+    - extra-google-m2repository
+    - extra-android-m2repository
+licenses:
+    - 'android-sdk-license-.+'
+
+before_install:
+  - yes | sdkmanager "platforms;android-27"
+
+jdk:
+  - oraclejdk8
+
+script:
+  - ./gradlew build
+
+env:
+  global:
+    - secure: "SONATYPE_NEXUS_USERNAME TODO"
+    - secure: "SONATYPE_NEXUS_PASSWORD TODO"
+
+branches:
+  except:
+    - gh-pages
+
+notifications:
+  email: false
+
+sudo: false
+
+cache:
+  directories:
+    - $HOME/.gradle
