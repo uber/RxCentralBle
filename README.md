@@ -26,7 +26,7 @@ RxCentralBle optimizes for the following use cases:
 
 Once this is on maven central, use gradle to obtain the dependency:
 
-```
+```gradle
 dependencies {
   implementation 'com.uber:rx-central-ble:0.0.1'
 }
@@ -40,7 +40,7 @@ The below demonstrates simple usage of RxCentralBle.  Check out the [Wiki](https
 
 Use the BluetoothDetector to detect the state of Bluetooth:
 
-```
+```java
 BluetoothDetector bluetoothDetector;
 Disposable detection;
 
@@ -57,7 +57,7 @@ detection = bluetoothDetector
 
 Dispose of your subscription to stop detection.  
 
-```
+```java
 // Stop Bluetooth detection.
 detection.dispose();
 ```
@@ -66,7 +66,7 @@ detection.dispose();
 
 Use the ConnectionManager to manage the lifecycle of connections to a peripheral and supply a fresh GattIO to the GattManager on every connection.
 
-```
+```java
 ScanMatcher scanMatcher;
 ConnectionManager connectionManager;
 GattManager gattManager;
@@ -87,7 +87,7 @@ connection = connectionManager
 
 Dispose of your subscription to disconnect.  
 
-```
+```java
 // Disconnect.
 connection.dispose();
 ```
@@ -96,7 +96,7 @@ connection.dispose();
 
 After injecting the latest connected GattIO into your GattManager, you can then queue operations and the GattManager will ensure these are executed in a serial FIFO fashion.  The GattManager is thread safe, so multiple consuming threads can queue operations and they will be reliably executed in the order they are subscribed.
 
-``` 
+```java 
 GattManager gattManager;
 Write write;
 Disposable queued;
@@ -115,7 +115,7 @@ queued = gattManager
 
 Dispose of your subscription to dequeue (i.e. cancel).  
 
-```       
+```java       
 // Cancel the write operation if it hasn't begun execution.
 queued.dispose();
 ```
