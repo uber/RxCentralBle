@@ -1,4 +1,4 @@
-# RxCentralBle [![Build Status](https://travis-ci.org/uber/RxCentralBle.svg?branch=master)](https://travis-ci.org/uber/RxCentralBle)
+# RxCentralBle [![Build Status](https://travis-ci.com/uber/RxCentralBle.svg?token=2UrwyXryNMzqEY69Hrhn&branch=master)](https://travis-ci.org/uber/RxCentralBle)
 
 RxCentralBle is a reactive, interface-driven library used to integrate with Bluetooth LE peripherals.   
 
@@ -28,7 +28,7 @@ Once this is on maven central, use gradle to obtain the dependency:
 
 ```gradle
 dependencies {
-  implementation 'com.uber:rx-central-ble:0.0.1'
+  implementation 'com.uber:rx-central-ble:1.0.0'
 }
 ```
 
