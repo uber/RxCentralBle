@@ -47,8 +47,8 @@ public class MainActivity extends AppCompatActivity {
 
     ButterKnife.bind(this);
 
-    connectionManager = ((SampleApplication)getApplication()).getConnectionManager();
-    gattManager = ((SampleApplication)getApplication()).getGattManager();
+    connectionManager = ((SampleApplication) getApplication()).getConnectionManager();
+    gattManager = ((SampleApplication) getApplication()).getGattManager();
 
     Timber.plant(new TextViewLoggingTree(logTextView));
 
@@ -84,8 +84,7 @@ public class MainActivity extends AppCompatActivity {
                 );
 
       }
-    }
-    else {
+    } else {
       connection.dispose();
       connection = null;
 
@@ -98,32 +97,32 @@ public class MainActivity extends AppCompatActivity {
   @OnClick(R.id.gapButton)
   public void getGap() {
     gattManager
-            .queueOperation(new Read(SampleApplication.GAP_SVC_UUID, SampleApplication.GAP_DEVICE_NAME_UUID, 5000))
-            .map(bytes -> new String(bytes, "UTF-8"))
-            .subscribe(
-                    name -> Timber.d("Get GAP: success: " + name),
-                    error -> Timber.d("Get GAP: error: " + error.getMessage())
-            );
+        .queueOperation(new Read(SampleApplication.GAP_SVC_UUID, SampleApplication.GAP_DEVICE_NAME_UUID, 5000))
+        .map(bytes -> new String(bytes, "UTF-8"))
+        .subscribe(
+          name -> Timber.d("Get GAP: success: " + name),
+          error -> Timber.d("Get GAP: error: " + error.getMessage()));
   }
 
   @SuppressLint("CheckResult")
   @OnClick(R.id.batteryButton)
   public void getBattery() {
     gattManager
-            .queueOperation(new Read(SampleApplication.BATTERY_SVC_UUID, SampleApplication.BATTERY_LEVEL_UUID, 5000))
-            .map(bytes -> bytes.length > 0 ? (int)bytes[0] : -1)
-            .subscribe(
-                    batteryLevel -> Timber.d("Get Battery: success: " + batteryLevel),
-                    error -> Timber.d("Get Battery: error: " + error.getMessage())
-            );
+        .queueOperation(new Read(SampleApplication.BATTERY_SVC_UUID, SampleApplication.BATTERY_LEVEL_UUID, 5000))
+        .map(bytes -> bytes.length > 0 ? (int) bytes[0] : -1)
+        .subscribe(
+          batteryLevel -> Timber.d("Get Battery: success: " + batteryLevel),
+          error -> Timber.d("Get Battery: error: " + error.getMessage()));
 
     gattManager
-            .queueOperation(new RegisterNotification(SampleApplication.BATTERY_SVC_UUID, SampleApplication.BATTERY_LEVEL_UUID, 5000))
-            .flatMapObservable(irrelevant -> gattManager.notification(SampleApplication.BATTERY_LEVEL_UUID))
-            .map(bytes -> bytes.length > 0 ? (int)bytes[0] : -1)
-            .subscribe(
-                    batteryLevel -> Timber.d("Notif Battery: success: " + batteryLevel),
-                    error -> Timber.d("Notif Battery: error: " + error.getMessage())
-            );
+        .queueOperation(new RegisterNotification(
+                SampleApplication.BATTERY_SVC_UUID,
+                SampleApplication.BATTERY_LEVEL_UUID,
+                5000))
+        .flatMapObservable(irrelevant -> gattManager.notification(SampleApplication.BATTERY_LEVEL_UUID))
+        .map(bytes -> bytes.length > 0 ? (int) bytes[0] : -1)
+        .subscribe(
+          batteryLevel -> Timber.d("Notif Battery: success: " + batteryLevel),
+          error -> Timber.d("Notif Battery: error: " + error.getMessage()));
   }
 }

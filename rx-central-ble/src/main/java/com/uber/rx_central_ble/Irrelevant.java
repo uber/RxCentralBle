@@ -17,11 +17,10 @@ package com.uber.rx_central_ble;
 
 /** Enum useful for Rx streams that are just notifications with no actual values. */
 public enum Irrelevant {
-    INSTANCE;
+  INSTANCE;
 
-    @Override
-    public String toString() {
-        return "██████";
-    }
+  @Override
+  public String toString() {
+    return "██████";
+  }
 }
-

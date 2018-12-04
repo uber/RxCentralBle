@@ -20,8 +20,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanResult;
 import android.support.annotation.Nullable;
 
-import java.util.UUID;
-
 /** Provides an abstraction layer for accessing details of a peripheral's advertisement data. */
 public interface ScanData {
 

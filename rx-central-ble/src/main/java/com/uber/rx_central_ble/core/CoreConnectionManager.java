@@ -29,7 +29,6 @@ import com.uber.rx_central_ble.ScanData;
 import com.uber.rx_central_ble.ScanMatcher;
 import com.uber.rx_central_ble.Scanner;
 import com.uber.rx_central_ble.Optional;
-import com.uber.rx_central_ble.core.scanners.JellyBeanScanData;
 import com.uber.rx_central_ble.core.scanners.JellyBeanScanner;
 import com.uber.rx_central_ble.core.scanners.LollipopScanner;
 
@@ -42,6 +41,7 @@ import io.reactivex.Single;
 import static com.uber.rx_central_ble.ConnectionError.Code.CONNECTION_IN_PROGRESS;
 import static com.uber.rx_central_ble.ConnectionError.Code.CONNECT_TIMEOUT;
 import static com.uber.rx_central_ble.ConnectionError.Code.SCAN_TIMEOUT;
+
 /** Core implementation of ConnectionManager. */
 public class CoreConnectionManager implements ConnectionManager {
 
@@ -109,17 +109,13 @@ public class CoreConnectionManager implements ConnectionManager {
                 .withLatestFrom(scanMatcherRelay, (enabled, scanMatcher) -> scanMatcher)
                 .compose(scan(scanner))
                 .compose(connectGatt(gattIOFactory, context))
-                .doOnNext(
-                        connectableGattIO -> {
-                          stateRelay.accept(State.CONNECTED);
-                        })
-                .doOnDispose(
-                        () -> {
-                          scanMatcherRelay.accept(Optional.empty());
-                          stateRelay.accept(State.DISCONNECTED);
-                        })
+                .doOnNext(connectableGattIO -> stateRelay.accept(State.CONNECTED))
+                .doOnDispose(() -> {
+                  scanMatcherRelay.accept(Optional.empty());
+                  stateRelay.accept(State.DISCONNECTED);
+                })
                 .doOnError(error -> stateRelay.accept(State.DISCONNECTED_WITH_ERROR))
-                .map(connectableGattIO -> (GattIO) connectableGattIO)
+                .map(connectableGattIO -> connectableGattIO)
                 .replay(1)
                 .refCount();
   }

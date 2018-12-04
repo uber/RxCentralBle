@@ -22,14 +22,6 @@ import android.support.annotation.Nullable;
 
 import com.uber.rx_central_ble.ParsedAdvertisement;
 import com.uber.rx_central_ble.ScanData;
-import com.uber.rx_central_ble.Utils;
-import com.uber.rx_central_ble.core.CoreParsedAdvertisement;
-
-import java.io.UnsupportedEncodingException;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.UUID;
 
 /**
  * Core implementation of ScanData interface.

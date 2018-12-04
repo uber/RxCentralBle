@@ -31,7 +31,21 @@ android {
         sourceCompatibility deps.build.javaVersion
         targetCompatibility deps.build.javaVersion
     }
+
+    lintOptions {
+        abortOnError true
+        lintConfig rootProject.file('config/lint/lint.xml')
+    }
 }
+
+task checkstyle(type: Checkstyle) {
+    source 'src'
+    include '**/*.java'
+    exclude '**/gen/**'
+
+    classpath = files()
+}
+check.dependsOn 'checkstyle'
 
 dependencies {
     implementation deps.support.appcompat

@@ -28,7 +28,7 @@ public interface ConnectionManager {
   /** Constant value for the default timeout during connection, in milliseconds. */
   int DEFAULT_CONNECTION_TIMEOUT = 30000;
 
-  /** State of the ConnectionManager */
+  /** State of the ConnectionManager. */
   enum State {
     DISCONNECTED,
     DISCONNECTED_WITH_ERROR,

@@ -31,14 +31,12 @@ android {
         targetCompatibility deps.build.javaVersion
     }
 
-    // Setup a simple lint config for an android app/library.
     lintOptions {
         abortOnError true
         lintConfig rootProject.file('config/lint/lint.xml')
     }
 }
 
-// This is required to run checkstyle on an android app/library.
 task checkstyle(type: Checkstyle) {
     source 'src'
     include '**/*.java'

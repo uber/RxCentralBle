@@ -91,9 +91,9 @@ public class CoreConnectionManagerTest  {
 
   @After
   public void after() {
-        RxJavaPlugins.reset();
-    }
-    
+    RxJavaPlugins.reset();
+  }
+
   @Test
   public void connect_failed_scanFailed() {
     prepareConnect(true);

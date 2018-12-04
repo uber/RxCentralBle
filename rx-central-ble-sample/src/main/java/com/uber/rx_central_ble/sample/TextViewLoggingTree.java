@@ -23,7 +23,7 @@ public class TextViewLoggingTree extends Timber.DebugTree {
 
       String logTimeStamp = String.valueOf(System.currentTimeMillis());
 
-      if (logTextView != null){
+      if (logTextView != null) {
         AndroidSchedulers.mainThread().scheduleDirect(() ->
                 logTextView.setText(logTimeStamp + " | " + message + "\n" + logTextView.getText().toString()));
       }

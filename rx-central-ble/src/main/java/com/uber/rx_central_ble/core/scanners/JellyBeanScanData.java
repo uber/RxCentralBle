@@ -21,17 +21,6 @@ import android.support.annotation.Nullable;
 
 import com.uber.rx_central_ble.ParsedAdvertisement;
 import com.uber.rx_central_ble.ScanData;
-import com.uber.rx_central_ble.Utils;
-
-import java.io.UnsupportedEncodingException;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * JellyBean implementation of ScanData interface.
@@ -42,7 +31,9 @@ public class JellyBeanScanData implements ScanData {
   private final BluetoothDevice bluetoothDevice;
   private final ParsedAdvertisement parsedAdvertisement;
 
-  public JellyBeanScanData(BluetoothDevice bluetoothDevice, int rssi, @Nullable ParsedAdvertisement parsedAdvertisement) {
+  public JellyBeanScanData(BluetoothDevice bluetoothDevice,
+                           int rssi,
+                           @Nullable ParsedAdvertisement parsedAdvertisement) {
     this.bluetoothDevice = bluetoothDevice;
     this.rssi = rssi;
     this.parsedAdvertisement = parsedAdvertisement;

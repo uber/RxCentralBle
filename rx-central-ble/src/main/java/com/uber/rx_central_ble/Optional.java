@@ -20,29 +20,29 @@ import java.util.Objects;
 /** Simple optional implementation to avoid usage of nulls in reactive streams. **/
 public class Optional<T> {
 
-    private T value;
+  private T value;
 
-    private Optional() {
-        this.value = null;
-    }
+  private Optional() {
+    this.value = null;
+  }
 
-    private Optional(T value) {
-        this.value = Objects.requireNonNull(value);
-    }
+  private Optional(T value) {
+    this.value = Objects.requireNonNull(value);
+  }
 
-    public static<T> Optional<T> empty() {
-        return new Optional<>();
-    }
+  public static <T> Optional<T> empty() {
+    return new Optional<>();
+  }
 
-    public static<T> Optional<T> of(T value) {
-        return new Optional<>(value);
-    }
+  public static <T> Optional<T> of(T value) {
+    return new Optional<>(value);
+  }
 
-    public boolean isPresent() {
-        return value != null;
-    }
+  public boolean isPresent() {
+    return value != null;
+  }
 
-    public T get() {
-        return value;
-    }
+  public T get() {
+    return value;
+  }
 }

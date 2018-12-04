@@ -24,7 +24,7 @@ public class NameScanMatcher implements ScanMatcher {
       scanRecordName = getScanRecordName(scanData);
     }
 
-    if (scanData.getBluetoothDevice().getName() != null){
+    if (scanData.getBluetoothDevice().getName() != null) {
       deviceName = scanData.getBluetoothDevice().getName();
     }
 
@@ -57,8 +57,7 @@ public class NameScanMatcher implements ScanMatcher {
             && scanData.getScanResult().getScanRecord() != null
             && scanData.getScanResult().getScanRecord().getDeviceName() != null) {
       return scanData.getScanResult().getScanRecord().getDeviceName();
-    }
-    else {
+    } else {
       return "";
     }
   }

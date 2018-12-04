@@ -22,7 +22,7 @@ public final class Utils {
 
   private static final char[] HEX_ARRAY = "0123456789abcdef".toCharArray();
 
-  private Utils() {}
+  private Utils() { }
 
   /**
    * Return a string representation of a byte array.
@@ -32,17 +32,19 @@ public final class Utils {
    */
   public static String bytesToHex(byte[] bytes) {
     char[] hexChars = new char[bytes.length * 2];
+
     for (int j = 0; j < bytes.length; j++) {
       int v = bytes[j] & 0xFF;
       hexChars[j * 2] = HEX_ARRAY[v >>> 4];
       hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
     }
+
     return new String(hexChars);
   }
 
   /**
    * Construct a 128bit BLE UUID (xxxxxxxx-0000-1000-8000-00805f9b34fb) from either 16 or 32 bit
-   * UUID
+   * UUID.
    *
    * @param value 16 or 32bit value of the UUID
    * @return 128bit BLE UUID
