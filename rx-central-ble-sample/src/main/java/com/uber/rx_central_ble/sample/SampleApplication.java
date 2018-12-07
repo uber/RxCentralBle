@@ -17,6 +17,12 @@ public class SampleApplication extends Application {
   public static final UUID GAP_DEVICE_NAME_UUID = Utils.uuidFromInteger(0x2A00);
   public static final UUID BATTERY_SVC_UUID = Utils.uuidFromInteger(0x180F);
   public static final UUID BATTERY_LEVEL_UUID = Utils.uuidFromInteger(0x2A19);
+  public static final UUID DIS_SVC_UUID = Utils.uuidFromInteger(0x180A);
+  public static final UUID DIS_MFG_NAME_UUID = Utils.uuidFromInteger(0x2A29);
+  public static final UUID DIS_MODEL_UUID = Utils.uuidFromInteger(0x2A24);
+  public static final UUID DIS_SERIAL_UUID = Utils.uuidFromInteger(0x2A25);
+  public static final UUID DIS_HARDWARE_UUID = Utils.uuidFromInteger(0x2A27);
+  public static final UUID DIS_FIRMWARE_UUID = Utils.uuidFromInteger(0x2A26);
 
   private ConnectionManager connectionManager;
   private GattManager gattManager;

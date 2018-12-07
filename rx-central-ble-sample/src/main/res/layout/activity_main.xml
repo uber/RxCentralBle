@@ -6,6 +6,16 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/mtuButton"
+        android:layout_width="70dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="MTU"
+        app:layout_constraintStart_toEndOf="@+id/disButton"
+        app:layout_constraintTop_toBottomOf="@+id/nameEditText" />
+
     <EditText
         android:id="@+id/nameEditText"
         android:layout_width="0dp"
@@ -55,8 +65,18 @@
         app:layout_constraintTop_toBottomOf="@+id/nameEditText" />
 
     <Button
+        android:id="@+id/disButton"
+        android:layout_width="70dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:text="DIS"
+        app:layout_constraintStart_toEndOf="@+id/batteryButton"
+        app:layout_constraintTop_toBottomOf="@+id/nameEditText" />
+
+    <Button
         android:id="@+id/gapButton"
-        android:layout_width="wrap_content"
+        android:layout_width="70dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="8dp"

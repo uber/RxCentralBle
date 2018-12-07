@@ -13,6 +13,7 @@ import com.uber.rx_central_ble.ConnectionManager;
 import com.uber.rx_central_ble.GattManager;
 import com.uber.rx_central_ble.core.operations.Read;
 import com.uber.rx_central_ble.core.operations.RegisterNotification;
+import com.uber.rx_central_ble.core.operations.RequestMtu;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -73,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
                           AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Disconnect"));
                           Timber.d("Connected to: " + name);
+                          Timber.d("Max Write Length (MTU): " + gattIO.getMaxWriteLength());
                         },
                         error -> {
                           connection.dispose();
@@ -124,5 +126,54 @@ public class MainActivity extends AppCompatActivity {
         .subscribe(
           batteryLevel -> Timber.d("Notif Battery: success: " + batteryLevel),
           error -> Timber.d("Notif Battery: error: " + error.getMessage()));
+  }
+
+  @SuppressLint("CheckResult")
+  @OnClick(R.id.disButton)
+  public void getDIS() {
+    gattManager
+            .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_MFG_NAME_UUID, 5000))
+            .map(bytes -> new String(bytes, "UTF-8"))
+            .subscribe(
+              name -> Timber.d("Get DIS Mfg: success: " + name),
+              error -> Timber.d("Get DIS Mfg: error: " + error.getMessage()));
+
+    gattManager
+            .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_MODEL_UUID, 5000))
+            .map(bytes -> new String(bytes, "UTF-8"))
+            .subscribe(
+              name -> Timber.d("Get DIS Model: success: " + name),
+              error -> Timber.d("Get DIS Model: error: " + error.getMessage()));
+
+    gattManager
+            .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_SERIAL_UUID, 5000))
+            .map(bytes -> new String(bytes, "UTF-8"))
+            .subscribe(
+              name -> Timber.d("Get DIS Serial: success: " + name),
+              error -> Timber.d("Get DIS Serial: error: " + error.getMessage()));
+
+    gattManager
+            .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_HARDWARE_UUID, 5000))
+            .map(bytes -> new String(bytes, "UTF-8"))
+            .subscribe(
+              name -> Timber.d("Get DIS Hardware: success: " + name),
+              error -> Timber.d("Get DIS Hardware: error: " + error.getMessage()));
+
+    gattManager
+            .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_FIRMWARE_UUID, 5000))
+            .map(bytes -> new String(bytes, "UTF-8"))
+            .subscribe(
+              name -> Timber.d("Get DIS Firmware: success: " + name),
+              error -> Timber.d("Get DIS Firmware: error: " + error.getMessage()));
+  }
+
+  @SuppressLint("CheckResult")
+  @OnClick(R.id.mtuButton)
+  public void getMtu() {
+    gattManager
+            .queueOperation(new RequestMtu(512, 5000))
+            .subscribe(
+              mtu -> Timber.d("MTU: success: " + mtu),
+              error -> Timber.d("MTU: error: " + error.getMessage()));
   }
 }

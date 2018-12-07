@@ -122,7 +122,7 @@ queued.dispose();
 
 ## Sample App
 
-The included sample application allows you to connect to any Bluetooth LE peripheral by name and query the Generic Access and Battery services.  Feel free to improve upon the sample and submit PRs to help the RxCentralBle community.
+The included sample application allows you to connect to any Bluetooth LE peripheral by name and query the Generic Access, Device Information, and Battery services.  Feel free to improve upon the sample and submit PRs to help the RxCentralBle community.
 
 ## License
 
