@@ -28,6 +28,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
+import com.jakewharton.rxrelay2.PublishRelay;
 import com.uber.rx_central_ble.ConnectionError;
 import com.uber.rx_central_ble.GattError;
 import com.uber.rx_central_ble.GattIO;
@@ -59,7 +60,7 @@ import static com.uber.rx_central_ble.GattError.ERROR_STATUS_CALL_FAILED;
 public class CoreGattIO implements GattIO {
 
   private final BehaviorRelay<Boolean> connectedRelay = BehaviorRelay.createDefault(false);
-  private final BehaviorRelay<Pair<UUID, byte[]>> notificationRelay = BehaviorRelay.create();
+  private final PublishRelay<Pair<UUID, byte[]>> notificationRelay = PublishRelay.create();
   private final Map<UUID, GattIO.Preprocessor> preprocessorMap = new HashMap<>();
 
   private final Context context;
@@ -564,8 +565,9 @@ public class CoreGattIO implements GattIO {
               notificationRelay.accept(new Pair<>(chr.getUuid(), processedBytes));
             }
           }
-
-          notificationRelay.accept(new Pair<>(chr.getUuid(), chr.getValue()));
+          else {
+            notificationRelay.accept(new Pair<>(chr.getUuid(), chr.getValue()));
+          }
         }
       }
 
