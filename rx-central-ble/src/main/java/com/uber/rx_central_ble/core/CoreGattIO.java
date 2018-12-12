@@ -564,8 +564,7 @@ public class CoreGattIO implements GattIO {
             if (processedBytes != null) {
               notificationRelay.accept(new Pair<>(chr.getUuid(), processedBytes));
             }
-          }
-          else {
+          } else {
             notificationRelay.accept(new Pair<>(chr.getUuid(), chr.getValue()));
           }
         }
