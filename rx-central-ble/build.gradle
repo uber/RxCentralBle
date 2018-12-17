@@ -60,3 +60,5 @@ dependencies {
     testImplementation deps.test.roboelectric
     testImplementation deps.test.powermock
 }
+
+apply from: rootProject.file('gradle/gradle-mvn-push.gradle')
