@@ -22,7 +22,6 @@ import android.support.annotation.Nullable;
 import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ConnectionError;
-import com.uber.rxcentralble.ScanMatcher;
 import com.uber.rxcentralble.Scanner;
 
 import io.reactivex.Observable;
@@ -39,7 +38,6 @@ public class JellyBeanScanner implements Scanner {
   private final BluetoothAdapter.LeScanCallback leScanCallback;
 
   @Nullable private PublishSubject<ScanData> scanDataSubject;
-  @Nullable private ScanMatcher scanMatcher;
 
   public JellyBeanScanner(ParsedAdvertisement.Factory parsedAdDataFactory) {
     this.parsedAdDataFactory = parsedAdDataFactory;
@@ -47,12 +45,11 @@ public class JellyBeanScanner implements Scanner {
   }
 
   @Override
-  public Observable<ScanData> scan(ScanMatcher scanMatcher) {
+  public Observable<ScanData> scan() {
     if (scanDataSubject != null) {
       return Observable.error(new ConnectionError(SCAN_IN_PROGRESS));
     }
 
-    this.scanMatcher = scanMatcher;
     this.scanDataSubject = PublishSubject.create();
 
     return scanDataSubject
@@ -89,11 +86,9 @@ public class JellyBeanScanner implements Scanner {
   /** Implementation of Android LeScanCallback. */
   private BluetoothAdapter.LeScanCallback getScanCallback() {
     return (bluetoothDevice, rssi, eirData) -> {
-      if (scanMatcher != null && scanDataSubject != null) {
+      if (scanDataSubject != null) {
         ScanData scanData = new JellyBeanScanData(bluetoothDevice, rssi, parsedAdDataFactory.produce(eirData));
-        if (scanMatcher.match(scanData)) {
-          scanDataSubject.onNext(scanData);
-        }
+        scanDataSubject.onNext(scanData);
       }
     };
   }

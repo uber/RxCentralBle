@@ -6,6 +6,8 @@ import android.os.Build;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ScanMatcher;
 
+import io.reactivex.ObservableTransformer;
+
 public class NameScanMatcher implements ScanMatcher {
 
   private final String name;
@@ -15,25 +17,31 @@ public class NameScanMatcher implements ScanMatcher {
   }
 
   @Override
-  public boolean match(ScanData scanData) {
-    String scanRecordName = "";
-    String deviceName = "";
-    String adDataName = "";
+  public ObservableTransformer<ScanData, ScanData> match() {
+    return scanDataStream ->
+            scanDataStream
+            .filter(scanData -> {
+              String scanRecordName = "";
+              String deviceName = "";
+              String adDataName = "";
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-      scanRecordName = getScanRecordName(scanData);
-    }
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                scanRecordName = getScanRecordName(scanData);
+              }
 
-    if (scanData.getBluetoothDevice().getName() != null) {
-      deviceName = scanData.getBluetoothDevice().getName();
-    }
+              if (scanData.getBluetoothDevice().getName() != null) {
+                deviceName = scanData.getBluetoothDevice().getName();
+              }
 
-    if (scanData.getParsedAdvertisement() != null
-            && scanData.getParsedAdvertisement().getName() != null) {
-      adDataName = scanData.getParsedAdvertisement().getName();
-    }
+              if (scanData.getParsedAdvertisement() != null
+                      && scanData.getParsedAdvertisement().getName() != null) {
+                adDataName = scanData.getParsedAdvertisement().getName();
+              }
 
-    return scanRecordName.contentEquals(name) || deviceName.contentEquals(name) || adDataName.contentEquals(name);
+              return scanRecordName.contentEquals(name)
+                      || deviceName.contentEquals(name)
+                      || adDataName.contentEquals(name);
+            });
   }
 
   @Override

@@ -21,7 +21,6 @@ import android.bluetooth.BluetoothDevice;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.ScanData;
-import com.uber.rxcentralble.ScanMatcher;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -52,7 +51,6 @@ public class JellyBeanScannerTest {
 
   @Mock ParsedAdvertisement.Factory adDataFactory;
   @Mock ParsedAdvertisement parsedAdvertisement;
-  @Mock ScanMatcher scanMatcher;
   @Mock BluetoothAdapter bluetoothAdapter;
   @Mock BluetoothDevice bluetoothDevice;
 
@@ -67,7 +65,6 @@ public class JellyBeanScannerTest {
 
     when(bluetoothAdapter.startLeScan(any())).thenReturn(true);
     when(adDataFactory.produce(any())).thenReturn(parsedAdvertisement);
-    when(scanMatcher.match(any())).thenReturn(true);
 
     scanner = new JellyBeanScanner(adDataFactory);
   }
@@ -76,7 +73,7 @@ public class JellyBeanScannerTest {
   public void scan_failed_bluetoothUnsupported() {
     when(BluetoothAdapter.getDefaultAdapter()).thenReturn(null);
 
-    scanDataTestObserver = scanner.scan(scanMatcher).test();
+    scanDataTestObserver = scanner.scan().test();
 
     scanDataTestObserver.assertError(
         throwable -> {
@@ -90,7 +87,7 @@ public class JellyBeanScannerTest {
     when(bluetoothAdapter.isEnabled()).thenReturn(false);
     when(BluetoothAdapter.getDefaultAdapter()).thenReturn(bluetoothAdapter);
 
-    scanDataTestObserver = scanner.scan(scanMatcher).test();
+    scanDataTestObserver = scanner.scan().test();
 
     scanDataTestObserver.assertError(
         throwable -> {
@@ -104,8 +101,8 @@ public class JellyBeanScannerTest {
     when(bluetoothAdapter.isEnabled()).thenReturn(true);
     when(BluetoothAdapter.getDefaultAdapter()).thenReturn(bluetoothAdapter);
 
-    scanner.scan(scanMatcher).test();
-    scanDataTestObserver = scanner.scan(scanMatcher).test();
+    scanner.scan().test();
+    scanDataTestObserver = scanner.scan().test();
 
     scanDataTestObserver.assertError(
         throwable -> {
@@ -119,7 +116,7 @@ public class JellyBeanScannerTest {
     when(bluetoothAdapter.isEnabled()).thenReturn(true);
     when(BluetoothAdapter.getDefaultAdapter()).thenReturn(bluetoothAdapter);
 
-    scanDataTestObserver = scanner.scan(scanMatcher).test();
+    scanDataTestObserver = scanner.scan().test();
 
     ArgumentCaptor<BluetoothAdapter.LeScanCallback> argument =
         ArgumentCaptor.forClass(BluetoothAdapter.LeScanCallback.class);

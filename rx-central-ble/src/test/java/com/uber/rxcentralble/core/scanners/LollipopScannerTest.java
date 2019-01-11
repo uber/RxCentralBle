@@ -25,7 +25,6 @@ import android.bluetooth.le.ScanResult;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.ScanData;
-import com.uber.rxcentralble.ScanMatcher;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -57,7 +56,6 @@ public class LollipopScannerTest {
   @Mock ParsedAdvertisement.Factory adDataFactory;
   @Mock ParsedAdvertisement parsedAdvertisement;
 
-  @Mock ScanMatcher scanMatcher;
   @Mock BluetoothAdapter bluetoothAdapter;
   @Mock BluetoothLeScanner bluetoothLeScanner;
   @Mock BluetoothDevice bluetoothDevice;
@@ -75,7 +73,6 @@ public class LollipopScannerTest {
 
     when(bluetoothAdapter.getBluetoothLeScanner()).thenReturn(bluetoothLeScanner);
     when(adDataFactory.produce(any())).thenReturn(parsedAdvertisement);
-    when(scanMatcher.match(any())).thenReturn(true);
     when(scanResult.getDevice()).thenReturn(bluetoothDevice);
     when(scanResult.getScanRecord()).thenReturn(scanRecord);
     when(scanRecord.getBytes()).thenReturn(new byte[] {0x00});
@@ -88,7 +85,7 @@ public class LollipopScannerTest {
   public void scan_failed_bluetoothUnsupported() {
     when(BluetoothAdapter.getDefaultAdapter()).thenReturn(null);
 
-    scanDataTestObserver = scanner.scan(scanMatcher).test();
+    scanDataTestObserver = scanner.scan().test();
 
     scanDataTestObserver.assertError(
         throwable -> {
@@ -102,7 +99,7 @@ public class LollipopScannerTest {
     when(bluetoothAdapter.isEnabled()).thenReturn(false);
     when(BluetoothAdapter.getDefaultAdapter()).thenReturn(bluetoothAdapter);
 
-    scanDataTestObserver = scanner.scan(scanMatcher).test();
+    scanDataTestObserver = scanner.scan().test();
 
     scanDataTestObserver.assertError(
         throwable -> {
@@ -116,8 +113,8 @@ public class LollipopScannerTest {
     when(bluetoothAdapter.isEnabled()).thenReturn(true);
     when(BluetoothAdapter.getDefaultAdapter()).thenReturn(bluetoothAdapter);
 
-    scanner.scan(scanMatcher).test();
-    scanDataTestObserver = scanner.scan(scanMatcher).test();
+    scanner.scan().test();
+    scanDataTestObserver = scanner.scan().test();
 
     scanDataTestObserver.assertError(
         throwable -> {
@@ -131,7 +128,7 @@ public class LollipopScannerTest {
     when(bluetoothAdapter.isEnabled()).thenReturn(true);
     when(BluetoothAdapter.getDefaultAdapter()).thenReturn(bluetoothAdapter);
 
-    scanDataTestObserver = scanner.scan(scanMatcher).test();
+    scanDataTestObserver = scanner.scan().test();
 
     ArgumentCaptor<ScanCallback> argument = ArgumentCaptor.forClass(ScanCallback.class);
     verify(bluetoothLeScanner).startScan(any(), any(), argument.capture());
@@ -150,7 +147,7 @@ public class LollipopScannerTest {
     when(bluetoothAdapter.isEnabled()).thenReturn(true);
     when(BluetoothAdapter.getDefaultAdapter()).thenReturn(bluetoothAdapter);
 
-    scanDataTestObserver = scanner.scan(scanMatcher).test();
+    scanDataTestObserver = scanner.scan().test();
 
     ArgumentCaptor<ScanCallback> argument = ArgumentCaptor.forClass(ScanCallback.class);
     verify(bluetoothLeScanner).startScan(any(), any(), argument.capture());

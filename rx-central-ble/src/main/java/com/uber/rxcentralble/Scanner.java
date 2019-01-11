@@ -30,11 +30,9 @@ public interface Scanner {
    *   <dd>{@code connect} does not operate by default on a particular {@link Scheduler}.
    * </dl>
    *
-   * @param scanMatcher matcher used to match discovered peripherals.
-   * @return Observable stream of discovered peripheral ScanData that match the provided
-   *     ScanMatcher, or else an error. {@link ConnectionError} will occur in cases where you can
-   *     retry scanning
+   * @return Observable stream of discovered peripheral ScanDat or else an error.
+   * {@link ConnectionError} will occur in cases where you canretry scanning
    */
   @SchedulerSupport(SchedulerSupport.NONE)
-  Observable<ScanData> scan(ScanMatcher scanMatcher);
+  Observable<ScanData> scan();
 }
