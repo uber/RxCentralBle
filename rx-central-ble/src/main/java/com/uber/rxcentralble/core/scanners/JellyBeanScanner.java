@@ -22,7 +22,6 @@ import android.support.annotation.Nullable;
 import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ConnectionError;
-import com.uber.rxcentralble.ScanMatcher;
 import com.uber.rxcentralble.Scanner;
 
 import io.reactivex.Observable;

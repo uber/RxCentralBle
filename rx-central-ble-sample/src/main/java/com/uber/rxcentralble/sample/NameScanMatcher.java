@@ -3,11 +3,9 @@ package com.uber.rxcentralble.sample;
 import android.annotation.TargetApi;
 import android.os.Build;
 
-import com.jakewharton.rxrelay2.PublishRelay;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ScanMatcher;
 
-import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
 
 public class NameScanMatcher implements ScanMatcher {
@@ -40,7 +38,9 @@ public class NameScanMatcher implements ScanMatcher {
                 adDataName = scanData.getParsedAdvertisement().getName();
               }
 
-              return scanRecordName.contentEquals(name) || deviceName.contentEquals(name) || adDataName.contentEquals(name);
+              return scanRecordName.contentEquals(name)
+                      || deviceName.contentEquals(name)
+                      || adDataName.contentEquals(name);
             });
   }
 
@@ -69,6 +69,4 @@ public class NameScanMatcher implements ScanMatcher {
       return "";
     }
   }
-
-
 }

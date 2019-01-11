@@ -29,7 +29,6 @@ import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ScanMatcher;
 import com.uber.rxcentralble.Scanner;
-import com.uber.rxcentralble.Optional;
 import com.uber.rxcentralble.core.scanners.JellyBeanScanner;
 import com.uber.rxcentralble.core.scanners.LollipopScanner;
 
@@ -124,6 +123,7 @@ public class CoreConnectionManager implements ConnectionManager {
   private ObservableTransformer<Boolean, ScanData> scan(Scanner scanner) {
     return bluetoothEnabled ->
             bluetoothEnabled
+                .doOnNext(connectableGattIO -> stateRelay.accept(State.SCANNING))
                 .switchMap(enabled -> scanner.scan())
                 .compose(scanMatcher != null ? scanMatcher.match() : scanData -> scanData)
                 .firstOrError()

@@ -25,7 +25,6 @@ import android.bluetooth.le.ScanResult;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.ScanData;
-import com.uber.rxcentralble.ScanMatcher;
 
 import org.junit.Before;
 import org.junit.Rule;
