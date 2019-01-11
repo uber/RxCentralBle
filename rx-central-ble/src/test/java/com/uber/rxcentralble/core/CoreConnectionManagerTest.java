@@ -35,6 +35,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.ObservableTransformer;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.TestScheduler;
@@ -78,7 +79,7 @@ public class CoreConnectionManagerTest  {
 
     RxJavaPlugins.setComputationSchedulerHandler(schedulerCallable -> testScheduler);
 
-    when(scanner.scan(any())).thenReturn(scanDataPublishSubject.hide());
+    when(scanner.scan()).thenReturn(scanDataPublishSubject.hide());
     when(bluetoothDetector.enabled()).thenReturn(bluetoothEnabledRelay.hide());
     when(gattIOFactory.produce(any(), any())).thenReturn(gattIO);
     when(gattIO.connect()).thenReturn(connectableStatePublishSubject.hide());
@@ -214,8 +215,8 @@ public class CoreConnectionManagerTest  {
     scanMatcher =
         new ScanMatcher() {
           @Override
-          public boolean match(ScanData scanData) {
-            return true;
+          public ObservableTransformer<ScanData, ScanData> match() {
+            return scanData -> scanData;
           }
 
           @Override

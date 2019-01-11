@@ -15,15 +15,13 @@
  */
 package com.uber.rxcentralble;
 
-/** Provides the capability to specify means to identify discovered peripheral matches. */
+import io.reactivex.ObservableTransformer;
+
+/** Provides the capability to specify logic to identify discovered peripheral matches. */
 public interface ScanMatcher {
 
   /**
-   * Determines if the ScanData for a discovered peripheral is a match against parameters and logic
-   * specified by this ScanMatcher.
-   *
-   * @param scanData the ScanData for a discovered peripheral.
-   * @return true if it's a match, else false.
+   * Transform a stream of discovered peripherals into the desired matches.
    */
-  boolean match(ScanData scanData);
+  ObservableTransformer<ScanData, ScanData> match();
 }

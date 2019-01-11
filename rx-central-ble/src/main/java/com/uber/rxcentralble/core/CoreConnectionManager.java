@@ -17,6 +17,7 @@ package com.uber.rxcentralble.core;
 
 import android.content.Context;
 import android.os.Build;
+import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -46,9 +47,10 @@ import static com.uber.rxcentralble.ConnectionError.Code.SCAN_TIMEOUT;
 public class CoreConnectionManager implements ConnectionManager {
 
   private final Observable<GattIO> sharedGattIOObservable;
-  private final BehaviorRelay<Optional<ScanMatcher>> scanMatcherRelay =
-      BehaviorRelay.createDefault(Optional.empty());
   private final BehaviorRelay<State> stateRelay = BehaviorRelay.createDefault(State.DISCONNECTED);
+
+  @Nullable
+  private ScanMatcher scanMatcher;
 
   private int scanTimeoutMs = DEFAULT_SCAN_TIMEOUT;
   private int connectionTimeoutMs = DEFAULT_CONNECTION_TIMEOUT;
@@ -81,14 +83,13 @@ public class CoreConnectionManager implements ConnectionManager {
   @Override
   public Observable<GattIO> connect(
       ScanMatcher scanMatcher, int scanTimeoutMs, int connectionTimeoutMs) {
-    if (scanMatcherRelay.getValue().isPresent()
-        && !scanMatcherRelay.getValue().get().equals(scanMatcher)) {
+    if (this.scanMatcher != null && !this.scanMatcher.equals(scanMatcher)) {
       return Observable.error(new ConnectionError(CONNECTION_IN_PROGRESS));
     }
 
     this.scanTimeoutMs = scanTimeoutMs;
     this.connectionTimeoutMs = connectionTimeoutMs;
-    scanMatcherRelay.accept(Optional.of(scanMatcher));
+    this.scanMatcher = scanMatcher;
 
     return sharedGattIOObservable;
   }
@@ -102,16 +103,16 @@ public class CoreConnectionManager implements ConnectionManager {
                     BluetoothDetector bluetoothDetector,
                     Scanner scanner,
                     GattIO.Factory gattIOFactory) {
+
     return bluetoothDetector
                 .enabled()
                 .distinctUntilChanged()
                 .filter(enabled -> enabled)
-                .withLatestFrom(scanMatcherRelay, (enabled, scanMatcher) -> scanMatcher)
                 .compose(scan(scanner))
                 .compose(connectGatt(gattIOFactory, context))
                 .doOnNext(connectableGattIO -> stateRelay.accept(State.CONNECTED))
                 .doOnDispose(() -> {
-                  scanMatcherRelay.accept(Optional.empty());
+                  scanMatcher = null;
                   stateRelay.accept(State.DISCONNECTED);
                 })
                 .doOnError(error -> stateRelay.accept(State.DISCONNECTED_WITH_ERROR))
@@ -120,21 +121,17 @@ public class CoreConnectionManager implements ConnectionManager {
                 .refCount();
   }
 
-  private ObservableTransformer<Optional<ScanMatcher>, ScanData> scan(Scanner scanner) {
-    return scanMatcherObservable ->
-        scanMatcherObservable
-            .firstOrError()
-            .doOnSuccess(scanMatcher -> stateRelay.accept(State.SCANNING))
-            .flatMap(
-                scanMatcher ->
-                    scanMatcher.isPresent()
-                        ? scanner.scan(scanMatcher.get()).firstOrError()
-                        : Single.never())
-            .timeout(
-                scanTimeoutMs,
-                TimeUnit.MILLISECONDS,
-                Single.error(new ConnectionError(SCAN_TIMEOUT)))
-            .toObservable();
+  private ObservableTransformer<Boolean, ScanData> scan(Scanner scanner) {
+    return bluetoothEnabled ->
+            bluetoothEnabled
+                .switchMap(enabled -> scanner.scan())
+                .compose(scanMatcher != null ? scanMatcher.match() : scanData -> scanData)
+                .firstOrError()
+                .timeout(
+                    scanTimeoutMs,
+                    TimeUnit.MILLISECONDS,
+                    Single.error(new ConnectionError(SCAN_TIMEOUT)))
+                .toObservable();
   }
 
   private ObservableTransformer<ScanData, GattIO> connectGatt(
