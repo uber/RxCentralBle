@@ -24,11 +24,11 @@ RxCentralBle optimizes for the following use cases:
 
 ## Download
 
-Once this is on maven central, use gradle to obtain the dependency:
+Available on Maven Central:
 
 ```gradle
 dependencies {
-  implementation 'com.uber:rx-central-ble:1.0.0'
+  implementation 'com.uber:rx-central-ble:1.0.1'
 }
 ```
 
