@@ -28,7 +28,7 @@ Available on Maven Central:
 
 ```gradle
 dependencies {
-  implementation 'com.uber:rx-central-ble:1.0.1'
+  implementation 'com.uber:rx-central-ble:1.0.2'
 }
 ```
 
