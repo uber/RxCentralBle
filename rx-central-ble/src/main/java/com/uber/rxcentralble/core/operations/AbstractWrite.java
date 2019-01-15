@@ -122,11 +122,13 @@ public abstract class AbstractWrite<T> implements GattOperation<T> {
     ByteBuffer byteBuffer = ByteBuffer.wrap(data);
 
     while (maxWriteLength < byteBuffer.remaining()) {
-      chunks.onNext(new Pair<>(gattIO, byteBuffer.get(chunk, 0, chunk.length).array()));
+      byteBuffer.get(chunk, 0, chunk.length);
+      chunks.onNext(new Pair<>(gattIO, chunk));
     }
 
     if (byteBuffer.hasRemaining()) {
-      chunks.onNext(new Pair<>(gattIO, byteBuffer.get(chunk, 0, byteBuffer.remaining()).array()));
+      byteBuffer.get(chunk, 0, byteBuffer.remaining());
+      chunks.onNext(new Pair<>(gattIO, chunk));
     }
 
     chunks.onComplete();
