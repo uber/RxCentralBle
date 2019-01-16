@@ -96,10 +96,7 @@ public abstract class AbstractWrite<T> implements GattOperation<T> {
                                 bytesSentRelay.getValue() + gattChunk.second.length))
                     .andThen(Single.just(gattChunk.first)))
         .lastOrError()
-        .doOnSubscribe(
-            d -> {
-              bytesSentRelay.accept(0);
-            });
+        .doOnSubscribe(d -> bytesSentRelay.accept(0));
   }
 
   protected abstract SingleTransformer<GattIO, T> postWrite();
@@ -121,12 +118,15 @@ public abstract class AbstractWrite<T> implements GattOperation<T> {
     byte[] chunk = new byte[maxWriteLength];
     ByteBuffer byteBuffer = ByteBuffer.wrap(data);
 
-    while (maxWriteLength < byteBuffer.remaining()) {
-      chunks.onNext(new Pair<>(gattIO, byteBuffer.get(chunk, 0, chunk.length).array()));
+    while (maxWriteLength <= byteBuffer.remaining()) {
+      byteBuffer.get(chunk, 0, chunk.length);
+      chunks.onNext(new Pair<>(gattIO, chunk));
     }
 
     if (byteBuffer.hasRemaining()) {
-      chunks.onNext(new Pair<>(gattIO, byteBuffer.get(chunk, 0, byteBuffer.remaining()).array()));
+      byte[] remaining = new byte[byteBuffer.remaining()];
+      byteBuffer.get(remaining, 0, byteBuffer.remaining());
+      chunks.onNext(new Pair<>(gattIO, remaining));
     }
 
     chunks.onComplete();

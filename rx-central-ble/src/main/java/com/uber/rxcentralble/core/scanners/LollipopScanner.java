@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
@@ -98,6 +99,7 @@ public class LollipopScanner implements Scanner {
     if (adapter != null) {
       BluetoothLeScanner bleScanner = adapter.getBluetoothLeScanner();
       if (bleScanner != null) {
+        Log.d("BLAR", "STOP SCAN");
         bleScanner.stopScan(scanCallback);
       }
     }
@@ -128,13 +130,15 @@ public class LollipopScanner implements Scanner {
       }
 
       private void handleScanData(ScanResult scanResult) {
-        ParsedAdvertisement parsedAdvertisement = null;
-        if (scanResult.getScanRecord() != null) {
-          parsedAdvertisement = parsedAdDataFactory.produce(scanResult.getScanRecord().getBytes());
-        }
+        if (scanDataSubject != null) {
+          ParsedAdvertisement parsedAdvertisement = null;
+          if (scanResult.getScanRecord() != null) {
+            parsedAdvertisement = parsedAdDataFactory.produce(scanResult.getScanRecord().getBytes());
+          }
 
-        ScanData scanData = new LollipopScanData(scanResult, parsedAdvertisement);
-        scanDataSubject.onNext(scanData);
+          ScanData scanData = new LollipopScanData(scanResult, parsedAdvertisement);
+          scanDataSubject.onNext(scanData);
+        }
       }
     };
   }

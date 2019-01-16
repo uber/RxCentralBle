@@ -45,11 +45,16 @@ import static com.uber.rxcentralble.ConnectionError.Code.SCAN_TIMEOUT;
 /** Core implementation of ConnectionManager. */
 public class CoreConnectionManager implements ConnectionManager {
 
-  private final Observable<GattIO> sharedGattIOObservable;
   private final BehaviorRelay<State> stateRelay = BehaviorRelay.createDefault(State.DISCONNECTED);
+  private final Context context;
+  private final BluetoothDetector bluetoothDetector;
+  private final Scanner scanner;
+  private final GattIO.Factory gattIOFactory;
 
   @Nullable
   private ScanMatcher scanMatcher;
+  @Nullable
+  private Observable<GattIO> sharedGattIOObservable;
 
   private int scanTimeoutMs = DEFAULT_SCAN_TIMEOUT;
   private int connectionTimeoutMs = DEFAULT_CONNECTION_TIMEOUT;
@@ -59,15 +64,16 @@ public class CoreConnectionManager implements ConnectionManager {
           BluetoothDetector bluetoothDetector,
           GattIO.Factory gattIOFactory) {
 
-    Scanner scanner;
     ParsedAdvertisement.Factory factory = new CoreParsedAdvertisement.Factory();
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-      scanner = new JellyBeanScanner(factory);
+      this.scanner = new JellyBeanScanner(factory);
     } else {
-      scanner = new LollipopScanner(factory);
+      this.scanner = new LollipopScanner(factory);
     }
 
-    sharedGattIOObservable = createdSharedObservable(context, bluetoothDetector, scanner, gattIOFactory);
+    this.context = context;
+    this.bluetoothDetector = bluetoothDetector;
+    this.gattIOFactory = gattIOFactory;
   }
 
   public CoreConnectionManager(
@@ -76,7 +82,10 @@ public class CoreConnectionManager implements ConnectionManager {
       Scanner scanner,
       GattIO.Factory gattIOFactory) {
 
-    sharedGattIOObservable = createdSharedObservable(context, bluetoothDetector, scanner, gattIOFactory);
+    this.context = context;
+    this.bluetoothDetector = bluetoothDetector;
+    this.gattIOFactory = gattIOFactory;
+    this.scanner = scanner;
   }
 
   @Override
@@ -84,11 +93,15 @@ public class CoreConnectionManager implements ConnectionManager {
       ScanMatcher scanMatcher, int scanTimeoutMs, int connectionTimeoutMs) {
     if (this.scanMatcher != null && !this.scanMatcher.equals(scanMatcher)) {
       return Observable.error(new ConnectionError(CONNECTION_IN_PROGRESS));
+    } else if (sharedGattIOObservable != null) {
+      return sharedGattIOObservable;
     }
 
     this.scanTimeoutMs = scanTimeoutMs;
     this.connectionTimeoutMs = connectionTimeoutMs;
     this.scanMatcher = scanMatcher;
+    this.sharedGattIOObservable = createdSharedObservable(context, bluetoothDetector, scanner,
+            scanMatcher, gattIOFactory);
 
     return sharedGattIOObservable;
   }
@@ -101,31 +114,30 @@ public class CoreConnectionManager implements ConnectionManager {
   private Observable<GattIO> createdSharedObservable(Context context,
                     BluetoothDetector bluetoothDetector,
                     Scanner scanner,
+                    ScanMatcher scanMatcher,
                     GattIO.Factory gattIOFactory) {
 
     return bluetoothDetector
                 .enabled()
                 .distinctUntilChanged()
                 .filter(enabled -> enabled)
-                .compose(scan(scanner))
+                .compose(scan(scanner, scanMatcher))
                 .compose(connectGatt(gattIOFactory, context))
                 .doOnNext(connectableGattIO -> stateRelay.accept(State.CONNECTED))
-                .doOnDispose(() -> {
-                  scanMatcher = null;
-                  stateRelay.accept(State.DISCONNECTED);
-                })
+                .doOnDispose(() -> stateRelay.accept(State.DISCONNECTED))
                 .doOnError(error -> stateRelay.accept(State.DISCONNECTED_WITH_ERROR))
+                .doFinally(() -> this.scanMatcher = null)
                 .map(connectableGattIO -> connectableGattIO)
                 .replay(1)
                 .refCount();
   }
 
-  private ObservableTransformer<Boolean, ScanData> scan(Scanner scanner) {
+  private ObservableTransformer<Boolean, ScanData> scan(Scanner scanner, ScanMatcher scanMatcher) {
     return bluetoothEnabled ->
             bluetoothEnabled
                 .doOnNext(connectableGattIO -> stateRelay.accept(State.SCANNING))
                 .switchMap(enabled -> scanner.scan())
-                .compose(scanMatcher != null ? scanMatcher.match() : scanData -> scanData)
+                .compose(scanMatcher.match())
                 .firstOrError()
                 .timeout(
                     scanTimeoutMs,
