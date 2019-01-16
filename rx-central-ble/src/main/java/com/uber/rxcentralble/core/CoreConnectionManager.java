@@ -93,15 +93,15 @@ public class CoreConnectionManager implements ConnectionManager {
       ScanMatcher scanMatcher, int scanTimeoutMs, int connectionTimeoutMs) {
     if (this.scanMatcher != null && !this.scanMatcher.equals(scanMatcher)) {
       return Observable.error(new ConnectionError(CONNECTION_IN_PROGRESS));
-    }
-    else if (sharedGattIOObservable != null){
+    } else if (sharedGattIOObservable != null) {
       return sharedGattIOObservable;
     }
 
     this.scanTimeoutMs = scanTimeoutMs;
     this.connectionTimeoutMs = connectionTimeoutMs;
     this.scanMatcher = scanMatcher;
-    this.sharedGattIOObservable = createdSharedObservable(context, bluetoothDetector, scanner, scanMatcher, gattIOFactory);
+    this.sharedGattIOObservable = createdSharedObservable(context, bluetoothDetector, scanner,
+            scanMatcher, gattIOFactory);
 
     return sharedGattIOObservable;
   }

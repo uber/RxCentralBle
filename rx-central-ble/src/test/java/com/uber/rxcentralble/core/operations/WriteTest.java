@@ -35,7 +35,6 @@ import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subjects.CompletableSubject;
 
-import static com.uber.rxcentralble.GattIO.DEFAULT_MTU;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
