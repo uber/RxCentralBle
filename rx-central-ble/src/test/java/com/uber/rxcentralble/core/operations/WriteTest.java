@@ -26,6 +26,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -165,11 +166,19 @@ public class WriteTest {
     verify(gattIO, times(numInvocations)).write(any(), any(), chunkCaptor.capture());
 
     for (int i = 0; i < length / mtu; i++) {
-      assertEquals(mtu, chunkCaptor.getAllValues().get(i).length);
+      byte[] chunk = chunkCaptor.getAllValues().get(i);
+      assertEquals(mtu, chunk.length);
+
+      byte[] original = Arrays.copyOfRange(data, i * mtu, i * mtu + mtu);
+      assertEquals(Arrays.hashCode(original), Arrays.hashCode(chunk));
     }
 
     if (length % mtu != 0) {
-      assertEquals(length % mtu, chunkCaptor.getAllValues().get(length / mtu).length);
+      byte[] chunk = chunkCaptor.getAllValues().get(length / mtu);
+      assertEquals(length % mtu, chunk.length);
+
+      byte[] original = Arrays.copyOfRange(data, (length / mtu) * mtu, ((length / mtu) * mtu) + (length % mtu));
+      assertEquals(Arrays.hashCode(original), Arrays.hashCode(chunk));
     }
   }
 }
