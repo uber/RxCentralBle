@@ -114,11 +114,10 @@ public abstract class AbstractWrite<T> implements GattOperation<T> {
       GattIO gattIO, byte[] data, int maxWriteLength) {
 
     ReplaySubject<Pair<GattIO, byte[]>> chunks = ReplaySubject.create();
-
-    byte[] chunk = new byte[maxWriteLength];
     ByteBuffer byteBuffer = ByteBuffer.wrap(data);
 
     while (maxWriteLength <= byteBuffer.remaining()) {
+      byte[] chunk = new byte[maxWriteLength];
       byteBuffer.get(chunk, 0, chunk.length);
       chunks.onNext(new Pair<>(gattIO, chunk));
     }
