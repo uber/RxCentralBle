@@ -26,12 +26,15 @@ import android.content.Context;
 import android.os.Build;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
+import android.util.Log;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.GattError;
 import com.uber.rxcentralble.GattIO;
+import com.uber.rxcentralble.RxCentralLogger;
+import com.uber.rxcentralble.Utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +45,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.SingleSubject;
+import timber.log.Timber;
 
 import static com.uber.rxcentralble.GattIO.ConnectableState.CONNECTED;
 import static com.uber.rxcentralble.ConnectionError.Code.DISCONNECTION;
@@ -506,6 +510,10 @@ public class CoreGattIO implements GattIO {
       @Override
       public void onConnectionStateChange(
           final BluetoothGatt gatt, final int status, final int newState) {
+        if (RxCentralLogger.isDebug()) {
+          RxCentralLogger.d("onConnectionStateChange - Status: " + status + " | State: " + newState);
+        }
+
         synchronized (syncRoot) {
           if (connectionStateSubject != null) {
             if (newState == BluetoothGatt.STATE_CONNECTED) {
@@ -541,6 +549,10 @@ public class CoreGattIO implements GattIO {
 
       @Override
       public void onServicesDiscovered(final BluetoothGatt gatt, final int status) {
+        if (RxCentralLogger.isDebug()) {
+          RxCentralLogger.d("onServicesDiscovered - Status: " + status);
+        }
+
         synchronized (syncRoot) {
           if (connectionStateSubject != null) {
             if (status == 0) {
@@ -557,6 +569,11 @@ public class CoreGattIO implements GattIO {
 
       @Override
       public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic chr) {
+        if (RxCentralLogger.isDebug()) {
+          RxCentralLogger.d("onCharacteristicChanged - UUID: " + chr.getUuid() + " | Data: "
+                  + Utils.bytesToHex(chr.getValue()));
+        }
+
         synchronized (syncRoot) {
           Preprocessor preprocessor = preprocessorMap.get(chr.getUuid());
           if (preprocessor != null) {
@@ -573,6 +590,11 @@ public class CoreGattIO implements GattIO {
       @Override
       public void onCharacteristicRead(
           BluetoothGatt gatt, BluetoothGattCharacteristic chr, int status) {
+        if (RxCentralLogger.isDebug()) {
+          RxCentralLogger.d("onCharacteristicRead - UUID: " + chr.getUuid() + " | Status: " + status
+                  + " | Data: " + Utils.bytesToHex(chr.getValue()));
+        }
+
         operationResult(
             readSubject,
             new Pair<>(chr.getUuid(), chr.getValue()),
@@ -583,12 +605,22 @@ public class CoreGattIO implements GattIO {
       @Override
       public void onCharacteristicWrite(
           BluetoothGatt gatt, BluetoothGattCharacteristic chr, int status) {
+        if (RxCentralLogger.isDebug()) {
+          RxCentralLogger.d("onCharacteristicWrite - UUID: " + chr.getUuid() + " | Status: " + status + " | Data: "
+                  + Utils.bytesToHex(chr.getValue()));
+        }
+
         operationResult(writeSubject, chr.getUuid(), status, WRITE_CHARACTERISTIC_FAILED);
       }
 
       @Override
       public void onDescriptorWrite(
           BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+        if (RxCentralLogger.isDebug()) {
+          RxCentralLogger.d("onDescriptorWrite - UUID: " + descriptor.getCharacteristic().getUuid()
+                  + " | Status: " + status);
+        }
+
         if (descriptor.getUuid().equals(CCCD_UUID)) {
           operationResult(
               registerNotificationSubject,
@@ -600,6 +632,10 @@ public class CoreGattIO implements GattIO {
 
       @Override
       public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+        if (RxCentralLogger.isDebug()) {
+          RxCentralLogger.d("onMtuChanged - Status: " + status + " | MTU: " + mtu);
+        }
+
         if (status == 0) {
           maxWriteLength = mtu;
         }
@@ -609,7 +645,27 @@ public class CoreGattIO implements GattIO {
 
       @Override
       public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
+        if (RxCentralLogger.isDebug()) {
+          RxCentralLogger.d("onReadRemoteRssi - Status: " + status + " | RSSI: " + rssi);
+        }
+
         operationResult(readRssiSubject, rssi, status, READ_RSSI_FAILED);
+      }
+
+      @Override
+      public void onPhyUpdate(BluetoothGatt gatt, int txPhy, int rxPhy, int status) {
+        if (RxCentralLogger.isDebug()) {
+          RxCentralLogger.d("onPhyUpdate - Status: " + status + " | txPHY: " + txPhy + " | rxPHY: "
+                  + rxPhy);
+        }
+      }
+
+      @Override
+      public void onPhyRead(BluetoothGatt gatt, int txPhy, int rxPhy, int status) {
+        if (RxCentralLogger.isDebug()) {
+          RxCentralLogger.d("onPhyRead - Status: " + status + " | txPHY: " + txPhy + " | rxPHY: "
+                  + rxPhy);
+        }
       }
 
       private <T> void operationResult(

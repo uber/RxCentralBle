@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.uber.rxcentralble.ConnectionManager;
 import com.uber.rxcentralble.GattManager;
+import com.uber.rxcentralble.RxCentralLogger;
 import com.uber.rxcentralble.core.operations.Read;
 import com.uber.rxcentralble.core.operations.RegisterNotification;
 import com.uber.rxcentralble.core.operations.RequestMtu;
@@ -53,6 +54,14 @@ public class MainActivity extends AppCompatActivity {
 
     Timber.plant(new TextViewLoggingTree(logTextView));
 
+    if (BuildConfig.DEBUG) {
+      Timber.plant(new Timber.DebugTree());
+
+      Disposable d = RxCentralLogger
+              .logs(RxCentralLogger.LogLevel.DEBUG)
+              .subscribe(message -> Timber.d(message));
+    }
+
     logTextView.setMovementMethod(new ScrollingMovementMethod());
   }
 
@@ -61,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     if (connection == null) {
       String name = nameEditText.getEditableText().toString();
       if (!TextUtils.isEmpty(name)) {
-        Timber.d("Connect to:  " + name);
+        Timber.i("Connect to:  " + name);
         connectButton.setText("Cancel");
 
         connection = connectionManager
@@ -73,15 +82,15 @@ public class MainActivity extends AppCompatActivity {
                           gattManager.setGattIO(gattIO);
 
                           AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Disconnect"));
-                          Timber.d("Connected to: " + name);
-                          Timber.d("Max Write Length (MTU): " + gattIO.getMaxWriteLength());
+                          Timber.i("Connected to: " + name);
+                          Timber.i("Max Write Length (MTU): " + gattIO.getMaxWriteLength());
                         },
                         error -> {
                           connection.dispose();
                           connection = null;
 
                           AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Connect"));
-                          Timber.d("Connection error: " + error.getMessage());
+                          Timber.i("Connection error: " + error.getMessage());
                         }
                 );
 
@@ -91,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
       connection = null;
 
       connectButton.setText("Connect");
-      Timber.d("Disconnected");
+      Timber.i("Disconnected");
     }
   }
 
@@ -102,8 +111,8 @@ public class MainActivity extends AppCompatActivity {
         .queueOperation(new Read(SampleApplication.GAP_SVC_UUID, SampleApplication.GAP_DEVICE_NAME_UUID, 5000))
         .map(bytes -> new String(bytes, "UTF-8"))
         .subscribe(
-          name -> Timber.d("Get GAP: success: " + name),
-          error -> Timber.d("Get GAP: error: " + error.getMessage()));
+          name -> Timber.i("Get GAP: success: " + name),
+          error -> Timber.i("Get GAP: error: " + error.getMessage()));
   }
 
   @SuppressLint("CheckResult")
@@ -113,8 +122,8 @@ public class MainActivity extends AppCompatActivity {
         .queueOperation(new Read(SampleApplication.BATTERY_SVC_UUID, SampleApplication.BATTERY_LEVEL_UUID, 5000))
         .map(bytes -> bytes.length > 0 ? (int) bytes[0] : -1)
         .subscribe(
-          batteryLevel -> Timber.d("Get Battery: success: " + batteryLevel),
-          error -> Timber.d("Get Battery: error: " + error.getMessage()));
+          batteryLevel -> Timber.i("Get Battery: success: " + batteryLevel),
+          error -> Timber.i("Get Battery: error: " + error.getMessage()));
 
     gattManager
         .queueOperation(new RegisterNotification(
@@ -124,8 +133,8 @@ public class MainActivity extends AppCompatActivity {
         .flatMapObservable(irrelevant -> gattManager.notification(SampleApplication.BATTERY_LEVEL_UUID))
         .map(bytes -> bytes.length > 0 ? (int) bytes[0] : -1)
         .subscribe(
-          batteryLevel -> Timber.d("Notif Battery: success: " + batteryLevel),
-          error -> Timber.d("Notif Battery: error: " + error.getMessage()));
+          batteryLevel -> Timber.i("Notif Battery: success: " + batteryLevel),
+          error -> Timber.i("Notif Battery: error: " + error.getMessage()));
   }
 
   @SuppressLint("CheckResult")
@@ -135,36 +144,36 @@ public class MainActivity extends AppCompatActivity {
             .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_MFG_NAME_UUID, 5000))
             .map(bytes -> new String(bytes, "UTF-8"))
             .subscribe(
-              name -> Timber.d("Get DIS Mfg: success: " + name),
-              error -> Timber.d("Get DIS Mfg: error: " + error.getMessage()));
+              name -> Timber.i("Get DIS Mfg: success: " + name),
+              error -> Timber.i("Get DIS Mfg: error: " + error.getMessage()));
 
     gattManager
             .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_MODEL_UUID, 5000))
             .map(bytes -> new String(bytes, "UTF-8"))
             .subscribe(
-              name -> Timber.d("Get DIS Model: success: " + name),
-              error -> Timber.d("Get DIS Model: error: " + error.getMessage()));
+              name -> Timber.i("Get DIS Model: success: " + name),
+              error -> Timber.i("Get DIS Model: error: " + error.getMessage()));
 
     gattManager
             .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_SERIAL_UUID, 5000))
             .map(bytes -> new String(bytes, "UTF-8"))
             .subscribe(
-              name -> Timber.d("Get DIS Serial: success: " + name),
-              error -> Timber.d("Get DIS Serial: error: " + error.getMessage()));
+              name -> Timber.i("Get DIS Serial: success: " + name),
+              error -> Timber.i("Get DIS Serial: error: " + error.getMessage()));
 
     gattManager
             .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_HARDWARE_UUID, 5000))
             .map(bytes -> new String(bytes, "UTF-8"))
             .subscribe(
-              name -> Timber.d("Get DIS Hardware: success: " + name),
-              error -> Timber.d("Get DIS Hardware: error: " + error.getMessage()));
+              name -> Timber.i("Get DIS Hardware: success: " + name),
+              error -> Timber.i("Get DIS Hardware: error: " + error.getMessage()));
 
     gattManager
             .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_FIRMWARE_UUID, 5000))
             .map(bytes -> new String(bytes, "UTF-8"))
             .subscribe(
-              name -> Timber.d("Get DIS Firmware: success: " + name),
-              error -> Timber.d("Get DIS Firmware: error: " + error.getMessage()));
+              name -> Timber.i("Get DIS Firmware: success: " + name),
+              error -> Timber.i("Get DIS Firmware: error: " + error.getMessage()));
   }
 
   @SuppressLint("CheckResult")
@@ -173,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
     gattManager
             .queueOperation(new RequestMtu(512, 5000))
             .subscribe(
-              mtu -> Timber.d("MTU: success: " + mtu),
-              error -> Timber.d("MTU: error: " + error.getMessage()));
+              mtu -> Timber.i("MTU: success: " + mtu),
+              error -> Timber.i("MTU: error: " + error.getMessage()));
   }
 }

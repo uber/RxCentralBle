@@ -51,6 +51,7 @@ dependencies {
     implementation deps.support.appcompat
     implementation deps.support.v4
     implementation deps.support.annotations
+    implementation deps.misc.timber
 
     api deps.rx.java
     api deps.rx.android

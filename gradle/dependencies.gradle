@@ -61,10 +61,15 @@ def rx = [
     relay: 'com.jakewharton.rxrelay2:rxrelay:2.1.0'
 ]
 
+def misc = [
+    timber: 'com.jakewharton.timber:timber:4.7.1'
+]
+
 ext.deps = [
     "build": build,
     "support": support,
     "test": test,
     "versions": versions,
-    "rx": rx
+    "rx": rx,
+    "misc": misc
 ]
