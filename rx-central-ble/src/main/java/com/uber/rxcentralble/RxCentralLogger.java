@@ -50,7 +50,7 @@ public class RxCentralLogger {
    * Log a debug message.
    * @param message
    */
-  public static void d(String message) {
+  public static void debug(String message) {
     if (isDebug()) {
       logRelay.accept(new RxCentralLog(LogLevel.DEBUG, message));
     }
@@ -60,7 +60,7 @@ public class RxCentralLogger {
    * Log an error message.
    * @param message
    */
-  public static void e(String message) {
+  public static void error(String message) {
     if (isError()) {
       logRelay.accept(new RxCentralLog(LogLevel.ERROR, message));
     }
@@ -90,7 +90,7 @@ public class RxCentralLogger {
     public LogLevel level;
     public String message;
 
-    public RxCentralLog(LogLevel level, String message) {
+    RxCentralLog(LogLevel level, String message) {
       this.level = level;
       this.message = message;
     }

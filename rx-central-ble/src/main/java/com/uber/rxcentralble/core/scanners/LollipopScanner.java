@@ -28,17 +28,14 @@ import com.uber.rxcentralble.RxCentralLogger;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.Scanner;
-import com.uber.rxcentralble.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
-import timber.log.Timber;
 
 import static com.uber.rxcentralble.ConnectionError.Code.SCAN_FAILED;
 import static com.uber.rxcentralble.ConnectionError.Code.SCAN_IN_PROGRESS;
@@ -91,7 +88,7 @@ public class LollipopScanner implements Scanner {
         bleScanner.startScan(filters, settingsBuilder.build(), scanCallback);
       } else {
         if (RxCentralLogger.isError()) {
-          RxCentralLogger.e("startScan - BluetoothLeScanner is null!");
+          RxCentralLogger.error("startScan - BluetoothLeScanner is null!");
         }
 
         scanDataSubject.onError(new ConnectionError(SCAN_FAILED));
@@ -99,10 +96,9 @@ public class LollipopScanner implements Scanner {
     } else {
       if (RxCentralLogger.isError()) {
         if (adapter == null) {
-          RxCentralLogger.e("startScan - Default Bluetooth Adapter is null!");
-        }
-        else {
-          RxCentralLogger.e("startScan - Bluetooth Adapter is disabled.");
+          RxCentralLogger.error("startScan - Default Bluetooth Adapter is null!");
+        } else {
+          RxCentralLogger.error("startScan - Bluetooth Adapter is disabled.");
         }
       }
 
@@ -118,14 +114,13 @@ public class LollipopScanner implements Scanner {
       if (bleScanner != null) {
         bleScanner.stopScan(scanCallback);
       } else if (RxCentralLogger.isError()) {
-        RxCentralLogger.e("stopScan - BluetoothLeScanner is null!");
+        RxCentralLogger.error("stopScan - BluetoothLeScanner is null!");
       }
     } else if (RxCentralLogger.isError()) {
       if (adapter == null) {
-        RxCentralLogger.e("stopScan - Default Bluetooth Adapter is null!");
-      }
-      else {
-        RxCentralLogger.e("stopScan - Bluetooth Adapter is disabled.");
+        RxCentralLogger.error("stopScan - Default Bluetooth Adapter is null!");
+      } else {
+        RxCentralLogger.error("stopScan - Bluetooth Adapter is disabled.");
       }
     }
 
@@ -138,7 +133,7 @@ public class LollipopScanner implements Scanner {
       @Override
       public void onScanResult(int callbackType, ScanResult scanResult) {
         if (RxCentralLogger.isDebug()) {
-          RxCentralLogger.d("onScanResult - BD_ADDR: "  + scanResult.getDevice().getAddress()
+          RxCentralLogger.debug("onScanResult - BD_ADDR: "  + scanResult.getDevice().getAddress()
                   + " | RSSI: " + scanResult.getRssi());
         }
 
@@ -148,7 +143,7 @@ public class LollipopScanner implements Scanner {
       @Override
       public void onScanFailed(int errorCode) {
         if (RxCentralLogger.isError()) {
-          RxCentralLogger.e("onScanFailed - Error Code: "  + errorCode);
+          RxCentralLogger.error("onScanFailed - Error Code: "  + errorCode);
         }
 
         if (scanDataSubject != null) {
@@ -160,8 +155,8 @@ public class LollipopScanner implements Scanner {
       public void onBatchScanResults(List<ScanResult> results) {
         for (ScanResult scanResult : results) {
           if (RxCentralLogger.isDebug()) {
-            RxCentralLogger.d("onBatchScanResults - BD_ADDR: "  + scanResult.getDevice().getAddress()
-                    + " | RSSI: " + scanResult.getRssi());
+            RxCentralLogger.debug("onBatchScanResults - BD_ADDR: "
+                    + scanResult.getDevice().getAddress() + " | RSSI: " + scanResult.getRssi());
           }
 
           handleScanData(scanResult);

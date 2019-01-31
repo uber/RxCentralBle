@@ -21,14 +21,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.util.Log;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.uber.rxcentralble.BluetoothDetector;
 import com.uber.rxcentralble.RxCentralLogger;
 
 import io.reactivex.Observable;
-import timber.log.Timber;
 
 /** Core implementation of BluetoothDetector. */
 @TargetApi(18)
@@ -53,7 +51,7 @@ public class CoreBluetoothDetector implements BluetoothDetector {
               int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
 
               if (RxCentralLogger.isDebug()) {
-                RxCentralLogger.d("Bluetooth State Changed: " + state);
+                RxCentralLogger.debug("Bluetooth State Changed: " + state);
               }
 
               if (state == BluetoothAdapter.STATE_ON) {
@@ -96,9 +94,8 @@ public class CoreBluetoothDetector implements BluetoothDetector {
       // Listen for Bluetooth state changes.
       context.registerReceiver(
           bluetoothStateReceiver, new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED));
-    }
-    else if (RxCentralLogger.isError()) {
-      RxCentralLogger.e("startDetection - Default Bluetooth Adapter is null!");
+    } else if (RxCentralLogger.isError()) {
+      RxCentralLogger.error("startDetection - Default Bluetooth Adapter is null!");
     }
   }
 
