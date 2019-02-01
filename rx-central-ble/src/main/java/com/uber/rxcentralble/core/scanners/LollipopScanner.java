@@ -24,6 +24,7 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 
 import com.uber.rxcentralble.ParsedAdvertisement;
+import com.uber.rxcentralble.RxCentralLogger;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.Scanner;
@@ -32,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
@@ -87,20 +87,40 @@ public class LollipopScanner implements Scanner {
       if (bleScanner != null) {
         bleScanner.startScan(filters, settingsBuilder.build(), scanCallback);
       } else {
+        if (RxCentralLogger.isError()) {
+          RxCentralLogger.error("startScan - BluetoothLeScanner is null!");
+        }
+
         scanDataSubject.onError(new ConnectionError(SCAN_FAILED));
       }
     } else {
+      if (RxCentralLogger.isError()) {
+        if (adapter == null) {
+          RxCentralLogger.error("startScan - Default Bluetooth Adapter is null!");
+        } else {
+          RxCentralLogger.error("startScan - Bluetooth Adapter is disabled.");
+        }
+      }
+
       scanDataSubject.onError(new ConnectionError(SCAN_FAILED));
     }
+
   }
 
   private void stopScan() {
     BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-    if (adapter != null) {
+    if (adapter != null && adapter.isEnabled()) {
       BluetoothLeScanner bleScanner = adapter.getBluetoothLeScanner();
       if (bleScanner != null) {
-        Log.d("BLAR", "STOP SCAN");
         bleScanner.stopScan(scanCallback);
+      } else if (RxCentralLogger.isError()) {
+        RxCentralLogger.error("stopScan - BluetoothLeScanner is null!");
+      }
+    } else if (RxCentralLogger.isError()) {
+      if (adapter == null) {
+        RxCentralLogger.error("stopScan - Default Bluetooth Adapter is null!");
+      } else {
+        RxCentralLogger.error("stopScan - Bluetooth Adapter is disabled.");
       }
     }
 
@@ -112,11 +132,20 @@ public class LollipopScanner implements Scanner {
 
       @Override
       public void onScanResult(int callbackType, ScanResult scanResult) {
+        if (RxCentralLogger.isDebug()) {
+          RxCentralLogger.debug("onScanResult - BD_ADDR: "  + scanResult.getDevice().getAddress()
+                  + " | RSSI: " + scanResult.getRssi());
+        }
+
         handleScanData(scanResult);
       }
 
       @Override
       public void onScanFailed(int errorCode) {
+        if (RxCentralLogger.isError()) {
+          RxCentralLogger.error("onScanFailed - Error Code: "  + errorCode);
+        }
+
         if (scanDataSubject != null) {
           scanDataSubject.onError(new ConnectionError(SCAN_FAILED));
         }
@@ -125,6 +154,11 @@ public class LollipopScanner implements Scanner {
       @Override
       public void onBatchScanResults(List<ScanResult> results) {
         for (ScanResult scanResult : results) {
+          if (RxCentralLogger.isDebug()) {
+            RxCentralLogger.debug("onBatchScanResults - BD_ADDR: "
+                    + scanResult.getDevice().getAddress() + " | RSSI: " + scanResult.getRssi());
+          }
+
           handleScanData(scanResult);
         }
       }

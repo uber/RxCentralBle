@@ -20,6 +20,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.support.annotation.Nullable;
 
 import com.uber.rxcentralble.ParsedAdvertisement;
+import com.uber.rxcentralble.RxCentralLogger;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.Scanner;
@@ -68,8 +69,18 @@ public class JellyBeanScanner implements Scanner {
     if (adapter != null && adapter.isEnabled()) {
       if (!adapter.startLeScan(leScanCallback)) {
         scanDataSubject.onError(new ConnectionError(SCAN_FAILED));
+      } else if (RxCentralLogger.isError()) {
+        RxCentralLogger.error("startLeScan failed.");
       }
     } else {
+      if (RxCentralLogger.isError()) {
+        if (adapter == null) {
+          RxCentralLogger.error("startScan - Default Bluetooth Adapter is null!");
+        } else {
+          RxCentralLogger.error("startScan - Bluetooth Adapter is disabled.");
+        }
+      }
+
       scanDataSubject.onError(new ConnectionError(SCAN_FAILED));
     }
   }
@@ -78,6 +89,12 @@ public class JellyBeanScanner implements Scanner {
     BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
     if (adapter != null && adapter.isEnabled()) {
       adapter.stopLeScan(leScanCallback);
+    } else if (RxCentralLogger.isError()) {
+      if (adapter == null) {
+        RxCentralLogger.error("stopScan - Default Bluetooth Adapter is null!");
+      } else {
+        RxCentralLogger.error("stopScan - Bluetooth Adapter is disabled.");
+      }
     }
 
     scanDataSubject = null;
@@ -86,6 +103,11 @@ public class JellyBeanScanner implements Scanner {
   /** Implementation of Android LeScanCallback. */
   private BluetoothAdapter.LeScanCallback getScanCallback() {
     return (bluetoothDevice, rssi, eirData) -> {
+      if (RxCentralLogger.isDebug()) {
+        RxCentralLogger.debug("onLeScan - BD_ADDR: "  + bluetoothDevice.getAddress()
+                + " | RSSI: " + rssi);
+      }
+
       if (scanDataSubject != null) {
         ScanData scanData = new JellyBeanScanData(bluetoothDevice, rssi, parsedAdDataFactory.produce(eirData));
         scanDataSubject.onNext(scanData);
