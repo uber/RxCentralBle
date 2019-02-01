@@ -17,6 +17,7 @@ package com.uber.rxcentralble.core;
 
 import android.content.Context;
 import android.os.Build;
+import android.support.annotation.IntRange;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
 
@@ -90,7 +91,7 @@ public class CoreConnectionManager implements ConnectionManager {
 
   @Override
   public Observable<GattIO> connect(
-      ScanMatcher scanMatcher, int scanTimeoutMs, int connectionTimeoutMs) {
+          ScanMatcher scanMatcher, int scanTimeoutMs, int connectionTimeoutMs) {
     if (this.scanMatcher != null && !this.scanMatcher.equals(scanMatcher)) {
       return Observable.error(new ConnectionError(CONNECTION_IN_PROGRESS));
     } else if (sharedGattIOObservable != null) {

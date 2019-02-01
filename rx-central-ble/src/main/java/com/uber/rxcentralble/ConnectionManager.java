@@ -15,6 +15,8 @@
  */
 package com.uber.rxcentralble;
 
+import android.support.annotation.IntRange;
+
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.annotations.SchedulerSupport;
@@ -55,7 +57,8 @@ public interface ConnectionManager {
    * @param scanMatcher dictates the logic used to match a peripheral for connection. The {@link
    *     ConnectionManager} will connect to the first discovered peripheral that is a match.
    * @param scanTimeoutMs scan timeout in milliseconds. If a timeout occurs, a {@link
-   *     ConnectionError} will be thrown with SCAN_TIMEOUT code.
+   *     ConnectionError} will be thrown with SCAN_TIMEOUT code.  Maximum timeout should be 29
+   *     minutes due to scan throttling in Android 7+
    * @param connectionTimeoutMs connection timeout in milliseconds. This is defined by the period
    *     between matching a peripheral for connection and establishing a connection. If a timeout
    *     occurs, a {@link ConnectionError} with CONNECT_TIMEOUT code.
@@ -63,7 +66,7 @@ public interface ConnectionManager {
    *     ConnectionError} for errors that may be retried for a new connection attempt.
    */
   @SchedulerSupport(SchedulerSupport.NONE)
-  Observable<GattIO> connect(ScanMatcher scanMatcher, int scanTimeoutMs, int connectionTimeoutMs);
+  Observable<GattIO> connect(ScanMatcher scanMatcher, @IntRange(from=0,to=1740000) int scanTimeoutMs, int connectionTimeoutMs);
 
   /**
    * Observe the internal state of the {@link ConnectionManager}.
