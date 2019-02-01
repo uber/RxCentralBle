@@ -17,7 +17,6 @@ package com.uber.rxcentralble.core;
 
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.IntRange;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
 
