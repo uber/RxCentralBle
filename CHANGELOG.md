@@ -21,3 +21,10 @@ Version 1.0.3
 
 * Resolve issues with v1.0.2
 * Fix chunking logic in AbstractWrite
+
+Version 1.0.4
+----------------------------
+
+* Scanner fixes for Android 7+
+* Resolved MTU handling issues
+* Implemented logging via RxCentralLogger
