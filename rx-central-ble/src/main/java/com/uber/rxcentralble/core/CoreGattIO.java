@@ -79,7 +79,7 @@ public class CoreGattIO implements GattIO {
   @Nullable private SingleSubject<Integer> requestMtuSubject;
   @Nullable private SingleSubject<Integer> readRssiSubject;
 
-  private int maxWriteLength = DEFAULT_MTU;
+  private int mtu = DEFAULT_MTU;
 
   public CoreGattIO(BluetoothDevice device, Context context) {
     this.context = context;
@@ -193,7 +193,7 @@ public class CoreGattIO implements GattIO {
 
   @Override
   public int getMaxWriteLength() {
-    return maxWriteLength;
+    return mtu - MTU_OVERHEAD;
   }
 
   @Override
@@ -636,7 +636,7 @@ public class CoreGattIO implements GattIO {
         }
 
         if (status == 0) {
-          maxWriteLength = mtu;
+          CoreGattIO.this.mtu = mtu;
         }
 
         operationResult(requestMtuSubject, mtu, status, REQUEST_MTU_FAILED);

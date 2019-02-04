@@ -26,7 +26,10 @@ public interface GattIO {
   UUID CCCD_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
   /** Default MTU for Bluetooth 4.0. */
-  int DEFAULT_MTU = 20;
+  int DEFAULT_MTU = 23;
+
+  /** Overhead for transmissions is 3 bytes. */
+  int MTU_OVERHEAD = 3;
 
   /**
    * Connect to the underlying peripheral.
@@ -203,9 +206,9 @@ public interface GattIO {
   Single<Integer> readRssi();
 
   /**
-   * Synchronously return the current MTU.
+   * Synchronously return the maximum length of a write operation.
    *
-   * @return the maximum length of a write operation i.e. the MTU.
+   * @return the maximum length of a write operation i.e. the MTU - MTU_OVERHEAD.
    */
   int getMaxWriteLength();
 
