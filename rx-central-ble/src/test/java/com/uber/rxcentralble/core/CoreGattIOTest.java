@@ -62,6 +62,7 @@ import static com.uber.rxcentralble.GattError.Code.WRITE_DESCRIPTOR_FAILED;
 import static com.uber.rxcentralble.GattError.ERROR_STATUS_CALL_FAILED;
 import static com.uber.rxcentralble.GattIO.ConnectableState.CONNECTED;
 import static com.uber.rxcentralble.GattIO.ConnectableState.CONNECTING;
+import static com.uber.rxcentralble.GattIO.MTU_OVERHEAD;
 import static com.uber.rxcentralble.core.CoreGattIO.CCCD_UUID;
 import static com.uber.rxcentralble.core.CoreGattIO.DEFAULT_MTU;
 import static org.junit.Assert.assertEquals;
@@ -766,7 +767,7 @@ public class CoreGattIOTest {
               && error.getErrorStatus() == 99;
         });
 
-    assertEquals(coreGattIO.getMaxWriteLength(), DEFAULT_MTU);
+    assertEquals(coreGattIO.getMaxWriteLength(), DEFAULT_MTU - MTU_OVERHEAD);
   }
 
   @Test
@@ -781,7 +782,7 @@ public class CoreGattIOTest {
 
     setMtuTestObserver.assertValue(100);
 
-    assertEquals(coreGattIO.getMaxWriteLength(), 100);
+    assertEquals(coreGattIO.getMaxWriteLength(), 100 - MTU_OVERHEAD);
   }
 
   @Test
