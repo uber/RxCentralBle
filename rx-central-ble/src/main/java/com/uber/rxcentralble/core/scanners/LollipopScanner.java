@@ -77,8 +77,12 @@ public class LollipopScanner implements Scanner {
     BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
     if (adapter != null && adapter.isEnabled()) {
       // Setting service uuid scan filter failing on Galaxy S6 on Android 7.
-      // Manually filter on scan operation.
+      // Other devices and versions of Android have additional issues with Scan Filters.
+      // Manually filter on scan operation.  Add a dummy filter to avoid Android 8.1+ enforcement
+      // of filters during background scanning.
       List<ScanFilter> filters = new ArrayList<>();
+      ScanFilter.Builder scanFilterBuilder = new ScanFilter.Builder();
+      filters.add(scanFilterBuilder.build());
 
       ScanSettings.Builder settingsBuilder = new ScanSettings.Builder();
       settingsBuilder.setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY);

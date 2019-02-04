@@ -90,7 +90,7 @@ public class CoreConnectionManager implements ConnectionManager {
 
   @Override
   public Observable<GattIO> connect(
-      ScanMatcher scanMatcher, int scanTimeoutMs, int connectionTimeoutMs) {
+          ScanMatcher scanMatcher, int scanTimeoutMs, int connectionTimeoutMs) {
     if (this.scanMatcher != null && !this.scanMatcher.equals(scanMatcher)) {
       return Observable.error(new ConnectionError(CONNECTION_IN_PROGRESS));
     } else if (sharedGattIOObservable != null) {
