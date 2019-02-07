@@ -43,11 +43,13 @@ public class CoreGattManagerTest {
   @Mock GattOperation<Irrelevant> gattOperation1;
   @Mock GattOperation<Irrelevant> gattOperation2;
   @Mock GattOperation<Irrelevant> gattOperation3;
+  @Mock GattOperation<Irrelevant> gattOperation4;
 
   private final UUID chrUuid = UUID.randomUUID();
   private final SingleSubject<Irrelevant> operationResultSubject1 = SingleSubject.create();
   private final SingleSubject<Irrelevant> operationResultSubject2 = SingleSubject.create();
   private final SingleSubject<Irrelevant> operationResultSubject3 = SingleSubject.create();
+  private final SingleSubject<Irrelevant> operationResultSubject4 = SingleSubject.create();
   private final PublishRelay<Boolean> connectedRelay = PublishRelay.create();
   private final PublishRelay<byte[]> notificationRelay = PublishRelay.create();
 
@@ -66,6 +68,7 @@ public class CoreGattManagerTest {
     when(gattOperation1.result()).thenReturn(operationResultSubject1.hide());
     when(gattOperation2.result()).thenReturn(operationResultSubject2.hide());
     when(gattOperation3.result()).thenReturn(operationResultSubject3.hide());
+    when(gattOperation4.result()).thenReturn(operationResultSubject4.hide());
 
     Single<Irrelevant> op1 = coreGattManager.queueOperation(gattOperation1);
     verify(gattOperation1, times(0)).execute(any());
@@ -73,21 +76,31 @@ public class CoreGattManagerTest {
     Single<Irrelevant> op2 = coreGattManager.queueOperation(gattOperation2);
     verify(gattOperation2, times(0)).execute(any());
 
+    Single<Irrelevant> op3 = coreGattManager.queueOperation(gattOperation3);
+    verify(gattOperation3, times(0)).execute(any());
+
     op1.test();
     op2.test();
+    TestObserver op3Observer = op3.test();
 
     verify(gattOperation1).execute(any());
     verify(gattOperation2, times(0)).execute(any());
 
+    // Subscriber for Operation 3 decides they want to cancel the operation.
+    op3Observer.dispose();
+
     operationResultSubject1.onSuccess(Irrelevant.INSTANCE);
     verify(gattOperation2).execute(any());
 
-    Single<Irrelevant> op3 = coreGattManager.queueOperation(gattOperation3);
-    op3.test();
-    verify(gattOperation3, times(0)).execute(any());
+    Single<Irrelevant> op4 = coreGattManager.queueOperation(gattOperation4);
+    op4.test();
+    verify(gattOperation4, times(0)).execute(any());
 
     operationResultSubject2.onError(new Exception());
-    verify(gattOperation3).execute(any());
+    verify(gattOperation4).execute(any());
+
+    // Operation 3 should never have executed.
+    verify(gattOperation3, times(0)).execute(any());
   }
 
   @Test
