@@ -56,7 +56,7 @@ public class CoreGattManager implements GattManager {
     return gattOperation
         .result()
         .doOnSubscribe(disposable -> processOperation(gattOperation))
-        .doFinally(this::nextOperation);
+        .doFinally(() -> endOperation(gattOperation));
   }
 
   @Override
@@ -85,12 +85,17 @@ public class CoreGattManager implements GattManager {
 
   }
 
-  private void nextOperation() {
+  private void endOperation(GattOperation gattOperation) {
     synchronized (queueSync) {
-      currentOperation = null;
-      if (!operationQueue.isEmpty() && gattRelay.getValue() != null) {
-        currentOperation = operationQueue.remove();
-        currentOperation.execute(gattRelay.getValue());
+      operationQueue.remove(gattOperation);
+
+      if (currentOperation == gattOperation) {
+        currentOperation = null;
+
+        if (!operationQueue.isEmpty() && gattRelay.getValue() != null) {
+          currentOperation = operationQueue.remove();
+          currentOperation.execute(gattRelay.getValue());
+        }
       }
     }
   }
