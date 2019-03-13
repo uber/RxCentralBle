@@ -120,7 +120,7 @@ public class CoreParsedAdvertisement implements ParsedAdvertisement {
             long lsb = byteBuffer.getLong();
             long msb = byteBuffer.getLong();
             servicesList.add(new UUID(msb, lsb));
-            bytesRead += 8;
+            bytesRead += 16;
           }
           break;
         case AD_SHORTENED_LOCAL_NAME:
