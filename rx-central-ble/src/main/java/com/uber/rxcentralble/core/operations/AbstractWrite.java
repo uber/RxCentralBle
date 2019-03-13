@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.SingleTransformer;
-import io.reactivex.subjects.ReplaySubject;
 
 /**
  * Core abstract implementation of a characteristic write operation. Use the basic {@link Write}
@@ -87,17 +86,16 @@ public abstract class AbstractWrite<T> implements GattOperation<T> {
         .firstOrError()
         .doOnSuccess(g -> gattRelay.accept(Optional.empty()))
         .flatMapObservable(gattIO -> {
-          int chunkCount = (int)Math.ceil((double)byteBuffer.remaining()
-                  / (double)gattIO.getMaxWriteLength());
+          int chunkCount = (int) Math.ceil((double) byteBuffer.remaining()
+                  / (double) gattIO.getMaxWriteLength());
           return Observable.range(0, chunkCount).map(index -> new Pair<>(gattIO, index));
         })
         .zipWith(chunkIndexRelay, (gattIndex, chunkIndexRelay) -> gattIndex)
         .flatMapSingle(
-              gattIndex ->
-                    gattIndex.first
-                    .write(svc, chr, chunk(byteBuffer, gattIndex.first.getMaxWriteLength()))
-                    .doOnComplete(() -> chunkIndexRelay.accept(gattIndex.second))
-                    .andThen(Single.just(gattIndex.first)))
+            gattIndex -> gattIndex.first
+                  .write(svc, chr, chunk(byteBuffer, gattIndex.first.getMaxWriteLength()))
+                  .doOnComplete(() -> chunkIndexRelay.accept(gattIndex.second))
+                  .andThen(Single.just(gattIndex.first)))
         .lastOrError()
         .doOnSubscribe(d -> chunkIndexRelay.accept(0));
   }
