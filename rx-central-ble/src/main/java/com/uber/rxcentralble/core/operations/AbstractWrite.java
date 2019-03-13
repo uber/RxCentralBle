@@ -15,6 +15,7 @@
  */
 package com.uber.rxcentralble.core.operations;
 
+import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -46,7 +47,7 @@ import io.reactivex.subjects.ReplaySubject;
  */
 public abstract class AbstractWrite<T> implements GattOperation<T> {
 
-  private final BehaviorRelay<Integer> bytesSentRelay = BehaviorRelay.createDefault(0);
+  private final BehaviorRelay<Integer> chunkIndexRelay = BehaviorRelay.createDefault(0);
 
   private final Relay<Optional<GattIO>> gattRelay = BehaviorRelay.createDefault(Optional.empty());
   private final Single<T> writeSingle;
@@ -78,58 +79,49 @@ public abstract class AbstractWrite<T> implements GattOperation<T> {
   }
 
   protected Single<GattIO> write(UUID svc, UUID chr, byte[] data) {
+    final ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+
     return gattRelay
         .filter(Optional::isPresent)
         .map(Optional::get)
         .firstOrError()
         .doOnSuccess(g -> gattRelay.accept(Optional.empty()))
-        .flatMapObservable(gattIO -> chunks(gattIO, data, gattIO.getMaxWriteLength()))
-        .zipWith(bytesSentRelay, (gattChunk, bytesSent) -> gattChunk)
+        .flatMapObservable(gattIO -> {
+          int chunkCount = (int)Math.ceil((double)byteBuffer.remaining()
+                  / (double)gattIO.getMaxWriteLength());
+          return Observable.range(0, chunkCount).map(index -> new Pair<>(gattIO, index));
+        })
+        .zipWith(chunkIndexRelay, (gattIndex, chunkIndexRelay) -> gattIndex)
         .flatMapSingle(
-            gattChunk ->
-                gattChunk
-                    .first
-                    .write(svc, chr, gattChunk.second)
-                    .doOnComplete(
-                        () ->
-                            bytesSentRelay.accept(
-                                bytesSentRelay.getValue() + gattChunk.second.length))
-                    .andThen(Single.just(gattChunk.first)))
+              gattIndex ->
+                    gattIndex.first
+                    .write(svc, chr, chunk(byteBuffer, gattIndex.first.getMaxWriteLength()))
+                    .doOnComplete(() -> chunkIndexRelay.accept(gattIndex.second))
+                    .andThen(Single.just(gattIndex.first)))
         .lastOrError()
-        .doOnSubscribe(d -> bytesSentRelay.accept(0));
+        .doOnSubscribe(d -> chunkIndexRelay.accept(0));
   }
 
   protected abstract SingleTransformer<GattIO, T> postWrite();
 
   /**
-   * Take a byte array and chunk it into sub-arrays of maxWriteLength in size. Emits each chunk on
-   * the returned Observable once subscribed.
+   * Take a byte array and segment it.
    *
-   * @param gattIO gattIO to operate on.
-   * @param data data to chunk.
-   * @param maxWriteLength may size of a chunk.
+   * @param byteBuffer  data to chunk.
    * @return Observable that emits each chunk, then completes.
    */
-  protected Observable<Pair<GattIO, byte[]>> chunks(
-      GattIO gattIO, byte[] data, int maxWriteLength) {
-
-    ReplaySubject<Pair<GattIO, byte[]>> chunks = ReplaySubject.create();
-    ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-
-    while (maxWriteLength <= byteBuffer.remaining()) {
+  @Nullable
+  private byte[] chunk(ByteBuffer byteBuffer, int maxWriteLength) {
+    if (maxWriteLength < byteBuffer.remaining()) {
       byte[] chunk = new byte[maxWriteLength];
       byteBuffer.get(chunk, 0, chunk.length);
-      chunks.onNext(new Pair<>(gattIO, chunk));
+      return chunk;
+    } else if (byteBuffer.hasRemaining()) {
+      byte[] chunk = new byte[byteBuffer.remaining()];
+      byteBuffer.get(chunk, 0, byteBuffer.remaining());
+      return chunk;
     }
 
-    if (byteBuffer.hasRemaining()) {
-      byte[] remaining = new byte[byteBuffer.remaining()];
-      byteBuffer.get(remaining, 0, byteBuffer.remaining());
-      chunks.onNext(new Pair<>(gattIO, remaining));
-    }
-
-    chunks.onComplete();
-
-    return chunks;
+    return null;
   }
 }

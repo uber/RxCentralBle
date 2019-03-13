@@ -9,8 +9,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.ConnectionManager;
 import com.uber.rxcentralble.GattManager;
+import com.uber.rxcentralble.Irrelevant;
 import com.uber.rxcentralble.RxCentralLogger;
 import com.uber.rxcentralble.core.operations.Read;
 import com.uber.rxcentralble.core.operations.RegisterNotification;
@@ -19,6 +21,7 @@ import com.uber.rxcentralble.core.operations.RequestMtu;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import timber.log.Timber;
@@ -77,6 +80,16 @@ public class MainActivity extends AppCompatActivity {
                 .connect(new NameScanMatcher(name),
                         DEFAULT_SCAN_TIMEOUT,
                         DEFAULT_CONNECTION_TIMEOUT)
+                .retryWhen(
+                        errors ->
+                                errors.flatMap(
+                                        error -> {
+                                          /*if (error instanceof ConnectionError) {
+                                            return Observable.just(Irrelevant.INSTANCE);
+                                          }*/
+
+                                          return Observable.error(error);
+                                        }))
                 .subscribe(
                         gattIO -> {
                           gattManager.setGattIO(gattIO);
