@@ -54,7 +54,7 @@ public class CoreConnectionManager implements ConnectionManager {
   @Nullable
   private ScanMatcher scanMatcher;
   @Nullable
-  private Observable<GattIO> sharedGattIOObservable;
+  protected Observable<GattIO> sharedGattIOObservable;
 
   private int scanTimeoutMs = DEFAULT_SCAN_TIMEOUT;
   private int connectionTimeoutMs = DEFAULT_CONNECTION_TIMEOUT;
@@ -126,7 +126,10 @@ public class CoreConnectionManager implements ConnectionManager {
                 .doOnNext(connectableGattIO -> stateRelay.accept(State.CONNECTED))
                 .doOnDispose(() -> stateRelay.accept(State.DISCONNECTED))
                 .doOnError(error -> stateRelay.accept(State.DISCONNECTED_WITH_ERROR))
-                .doFinally(() -> this.scanMatcher = null)
+                .doFinally(() -> {
+                  this.sharedGattIOObservable = null;
+                  this.scanMatcher = null;
+                })
                 .map(connectableGattIO -> connectableGattIO)
                 .replay(1)
                 .refCount();
