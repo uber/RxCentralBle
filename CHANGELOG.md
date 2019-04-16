@@ -28,3 +28,8 @@ Version 1.0.4
 * Scanner fixes for Android 7+
 * Resolved MTU handling issues
 * Implemented logging via RxCentralLogger
+
+Version 1.0.5
+----------------------------
+
+* Now shipping ScanMatcher implementations
