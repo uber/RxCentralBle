@@ -52,7 +52,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/batteryButton" />
+        app:layout_constraintTop_toBottomOf="@+id/toggleButtonBleDetect" />
 
     <Button
         android:id="@+id/batteryButton"
@@ -83,5 +83,18 @@
         android:text="GAP"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/nameEditText" />
+
+    <ToggleButton
+        android:id="@+id/toggleButtonBleDetect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="8dp"
+        android:text="ToggleButton"
+        android:textOff="BLE Detect Off"
+        android:textOn="BLE Detect On"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/gapButton" />
 
 </android.support.constraint.ConstraintLayout>
