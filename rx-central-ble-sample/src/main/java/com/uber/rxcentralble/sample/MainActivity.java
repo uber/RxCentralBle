@@ -5,23 +5,37 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Pair;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.uber.rxcentralble.BluetoothDetector;
 import com.uber.rxcentralble.ConnectionManager;
 import com.uber.rxcentralble.GattManager;
 import com.uber.rxcentralble.RxCentralLogger;
+import com.uber.rxcentralble.ScanData;
+import com.uber.rxcentralble.Scanner;
+import com.uber.rxcentralble.core.CoreParsedAdvertisement;
 import com.uber.rxcentralble.core.operations.Read;
 import com.uber.rxcentralble.core.operations.RegisterNotification;
 import com.uber.rxcentralble.core.operations.RequestMtu;
+import com.uber.rxcentralble.core.scanners.LollipopScanner;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnCheckedChanged;
 import butterknife.OnClick;
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
 
 import static com.uber.rxcentralble.ConnectionManager.DEFAULT_CONNECTION_TIMEOUT;
@@ -29,6 +43,7 @@ import static com.uber.rxcentralble.ConnectionManager.DEFAULT_SCAN_TIMEOUT;
 
 public class MainActivity extends AppCompatActivity {
 
+  private BluetoothDetector bluetoothDetector;
   private ConnectionManager connectionManager;
   private GattManager gattManager;
 
@@ -41,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
   @BindView(R.id.buttonConnect)
   Button connectButton;
 
+  Disposable bluetoothDetection;
   Disposable connection;
 
   @Override
@@ -50,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
     ButterKnife.bind(this);
 
+    bluetoothDetector = ((SampleApplication) getApplication()).getBluetoothDetector();
     connectionManager = ((SampleApplication) getApplication()).getConnectionManager();
     gattManager = ((SampleApplication) getApplication()).getGattManager();
 
@@ -194,5 +211,28 @@ public class MainActivity extends AppCompatActivity {
             .subscribe(
               mtu -> Timber.i("MTU: success: " + mtu),
               error -> Timber.i("MTU: error: " + error.getMessage()));
+  }
+
+  @OnCheckedChanged(R.id.toggleButtonBleDetect)
+  public void bleDetect(CompoundButton button, boolean checked) {
+    if (checked && bluetoothDetection == null) {
+      Timber.i("Bluetooth Detection Active");
+      bluetoothDetection = new CompositeDisposable();
+      bluetoothDetection = bluetoothDetector
+              .enabled()
+              .subscribe(enabled -> {
+                if (enabled) {
+                  Timber.i("Bluetooth Enabled");
+                }
+                else {
+                  Timber.i("Bluetooth Disabled");
+                }
+              });
+    }
+    else if (bluetoothDetection != null) {
+      bluetoothDetection.dispose();
+      bluetoothDetection = null;
+      Timber.i("Bluetooth Detection Deactivated");
+    }
   }
 }

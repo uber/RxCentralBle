@@ -21,6 +21,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.util.Log;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.uber.rxcentralble.BluetoothDetector;
@@ -47,7 +48,7 @@ public class CoreBluetoothDetector implements BluetoothDetector {
           @Override
           public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+            if (action != null && action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
               int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
 
               if (RxCentralLogger.isDebug()) {
@@ -100,7 +101,13 @@ public class CoreBluetoothDetector implements BluetoothDetector {
   }
 
   private void stopDetection() {
-    context.unregisterReceiver(bluetoothStateReceiver);
+    try {
+      context.unregisterReceiver(bluetoothStateReceiver);
+    } catch(IllegalArgumentException e) {
+      if (RxCentralLogger.isError()) {
+        RxCentralLogger.error("stopDetection - Unregister receiver failed!");
+      }
+    }
 
     bluetoothEnabledRelay.accept(Capability.UNSUPPORTED);
   }
