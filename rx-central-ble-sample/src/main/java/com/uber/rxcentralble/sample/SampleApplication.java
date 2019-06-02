@@ -1,6 +1,10 @@
 package com.uber.rxcentralble.sample;
 
+import android.annotation.TargetApi;
 import android.app.Application;
+import android.os.Build;
+
+import com.uber.rxcentralble.BluetoothDetector;
 import com.uber.rxcentralble.ConnectionManager;
 import com.uber.rxcentralble.GattManager;
 import com.uber.rxcentralble.Utils;
@@ -26,15 +30,22 @@ public class SampleApplication extends Application {
 
   private ConnectionManager connectionManager;
   private GattManager gattManager;
+  private BluetoothDetector bluetoothDetector;
 
+  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   @Override
   public void onCreate() {
     super.onCreate();
 
+    bluetoothDetector = new CoreBluetoothDetector(this.getApplicationContext());
     gattManager = new CoreGattManager();
     connectionManager = new CoreConnectionManager(this,
             new CoreBluetoothDetector(this),
             new CoreGattIO.Factory());
+  }
+
+  public BluetoothDetector getBluetoothDetector() {
+    return bluetoothDetector;
   }
 
   public ConnectionManager getConnectionManager() {
