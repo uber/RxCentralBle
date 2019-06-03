@@ -100,11 +100,13 @@ public class CoreBluetoothDetector implements BluetoothDetector {
   }
 
   private void stopDetection() {
-    try {
-      context.unregisterReceiver(bluetoothStateReceiver);
-    } catch (IllegalArgumentException e) {
-      if (RxCentralLogger.isError()) {
-        RxCentralLogger.error("stopDetection - Unregister receiver failed!");
+    if (BluetoothAdapter.getDefaultAdapter() != null) {
+      try {
+        context.unregisterReceiver(bluetoothStateReceiver);
+      } catch (IllegalArgumentException e) {
+        if (RxCentralLogger.isError()) {
+          RxCentralLogger.error("stopDetection - Unregister receiver failed!");
+        }
       }
     }
 
