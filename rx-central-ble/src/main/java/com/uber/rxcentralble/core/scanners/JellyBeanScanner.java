@@ -24,6 +24,7 @@ import com.uber.rxcentralble.RxCentralLogger;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.Scanner;
+import com.uber.rxcentralble.core.CoreParsedAdvertisement;
 
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
@@ -39,6 +40,10 @@ public class JellyBeanScanner implements Scanner {
   private final BluetoothAdapter.LeScanCallback leScanCallback;
 
   @Nullable private PublishSubject<ScanData> scanDataSubject;
+
+  public JellyBeanScanner() {
+    this(new CoreParsedAdvertisement.Factory());
+  }
 
   public JellyBeanScanner(ParsedAdvertisement.Factory parsedAdDataFactory) {
     this.parsedAdDataFactory = parsedAdDataFactory;

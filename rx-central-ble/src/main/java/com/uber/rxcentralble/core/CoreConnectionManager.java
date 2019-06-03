@@ -59,16 +59,23 @@ public class CoreConnectionManager implements ConnectionManager {
   private int scanTimeoutMs = DEFAULT_SCAN_TIMEOUT;
   private int connectionTimeoutMs = DEFAULT_CONNECTION_TIMEOUT;
 
+  public CoreConnectionManager(Context context) {
+    this(context, new CoreBluetoothDetector(context));
+  }
+
+  public CoreConnectionManager(Context context, BluetoothDetector bluetoothDetector) {
+    this(context, bluetoothDetector, new CoreGattIO.Factory());
+  }
+
   public CoreConnectionManager(
           Context context,
           BluetoothDetector bluetoothDetector,
           GattIO.Factory gattIOFactory) {
 
-    ParsedAdvertisement.Factory factory = new CoreParsedAdvertisement.Factory();
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-      this.scanner = new JellyBeanScanner(factory);
+      this.scanner = new JellyBeanScanner();
     } else {
-      this.scanner = new LollipopScanner(factory);
+      this.scanner = new LollipopScanner();
     }
 
     this.context = context;

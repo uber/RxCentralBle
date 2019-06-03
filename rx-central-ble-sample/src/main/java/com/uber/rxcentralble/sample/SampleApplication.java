@@ -39,9 +39,7 @@ public class SampleApplication extends Application {
 
     bluetoothDetector = new CoreBluetoothDetector(this.getApplicationContext());
     gattManager = new CoreGattManager();
-    connectionManager = new CoreConnectionManager(this,
-            new CoreBluetoothDetector(this),
-            new CoreGattIO.Factory());
+    connectionManager = new CoreConnectionManager(this, bluetoothDetector);
   }
 
   public BluetoothDetector getBluetoothDetector() {
