@@ -25,7 +25,6 @@ import com.uber.rxcentralble.BluetoothDetector;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.ConnectionManager;
 import com.uber.rxcentralble.GattIO;
-import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ScanMatcher;
 import com.uber.rxcentralble.Scanner;
