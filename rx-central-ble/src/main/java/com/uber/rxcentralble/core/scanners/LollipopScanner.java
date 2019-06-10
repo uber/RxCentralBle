@@ -28,6 +28,7 @@ import com.uber.rxcentralble.RxCentralLogger;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.Scanner;
+import com.uber.rxcentralble.core.CoreParsedAdvertisement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +49,10 @@ public class LollipopScanner implements Scanner {
   private final ScanCallback scanCallback;
 
   @Nullable private PublishSubject<ScanData> scanDataSubject;
+
+  public LollipopScanner() {
+    this(new CoreParsedAdvertisement.Factory());
+  }
 
   public LollipopScanner(ParsedAdvertisement.Factory parsedAdDataFactory) {
     this.parsedAdDataFactory = parsedAdDataFactory;
