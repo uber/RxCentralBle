@@ -28,3 +28,14 @@ Version 1.0.4
 * Scanner fixes for Android 7+
 * Resolved MTU handling issues
 * Implemented logging via RxCentralLogger
+
+Version 1.0.5
+----------------------------
+
+* New RSSI and Service Scan Matchers
+
+Version 1.0.6
+----------------------------
+
+* Resolve CoreBluetoothDetector unsubscribe crash on devices that don't support BLE
+* Simplified core instance constructors
