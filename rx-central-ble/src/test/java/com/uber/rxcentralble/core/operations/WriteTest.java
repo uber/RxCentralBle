@@ -159,7 +159,7 @@ public class WriteTest {
                     .delay(1000, TimeUnit.MILLISECONDS))
             .test();
 
-    testScheduler.advanceTimeBy(10000, TimeUnit.MILLISECONDS);
+    testScheduler.advanceTimeBy(1000, TimeUnit.MILLISECONDS);
 
     when(gattIO.write(any(), any(), any())).thenReturn(writeCompletable);
 
@@ -167,7 +167,7 @@ public class WriteTest {
 
     writeCompletable.onComplete();
 
-    verifyChunks(20, 128, 11);
+    verifyChunks(20, 128, 2);
 
     writeResultTestObserver.assertComplete();
   }
