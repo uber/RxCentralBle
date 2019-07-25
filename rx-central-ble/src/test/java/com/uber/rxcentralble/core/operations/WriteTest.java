@@ -15,8 +15,6 @@
  */
 package com.uber.rxcentralble.core.operations;
 
-import android.util.Log;
-
 import com.uber.rxcentralble.GattError;
 import com.uber.rxcentralble.GattIO;
 import com.uber.rxcentralble.Irrelevant;
