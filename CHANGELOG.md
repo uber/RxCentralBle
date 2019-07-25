@@ -39,3 +39,8 @@ Version 1.0.6
 
 * Resolve CoreBluetoothDetector unsubscribe crash on devices that don't support BLE
 * Simplified core instance constructors
+
+Version 1.0.7
+----------------------------
+
+* Rewind byte buffer in AbstractWrite to support reactive retry logic
