@@ -97,7 +97,10 @@ public abstract class AbstractWrite<T> implements GattOperation<T> {
                   .doOnComplete(() -> chunkIndexRelay.accept(gattIndex.second))
                   .andThen(Single.just(gattIndex.first)))
         .lastOrError()
-        .doOnSubscribe(d -> chunkIndexRelay.accept(0));
+        .doOnSubscribe(d -> {
+          byteBuffer.rewind();
+          chunkIndexRelay.accept(0);
+        });
   }
 
   protected abstract SingleTransformer<GattIO, T> postWrite();

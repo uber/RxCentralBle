@@ -31,6 +31,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import io.reactivex.Completable;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.TestScheduler;
@@ -146,6 +147,31 @@ public class WriteTest {
     writeResultTestObserver.assertComplete();
   }
 
+  @Test
+  public void write_success_after_retry() {
+    prepareWrite(20, 128);
+
+    when(gattIO.write(any(), any(), any())).thenReturn(Completable.error(new Exception("TEST")));
+
+    writeResultTestObserver = write
+            .executeWithResult(gattIO)
+            .retryWhen(errors -> errors
+                    .delay(1000, TimeUnit.MILLISECONDS))
+            .test();
+
+    testScheduler.advanceTimeBy(1000, TimeUnit.MILLISECONDS);
+
+    when(gattIO.write(any(), any(), any())).thenReturn(writeCompletable);
+
+    testScheduler.advanceTimeBy(1000, TimeUnit.MILLISECONDS);
+
+    writeCompletable.onComplete();
+
+    verifyChunks(20, 128, 2);
+
+    writeResultTestObserver.assertComplete();
+  }
+
   private void prepareWrite(int mtu, int length) {
     when(gattIO.getMaxWriteLength()).thenReturn(mtu);
 
@@ -158,23 +184,40 @@ public class WriteTest {
   }
 
   private void verifyChunks(int mtu, int length) {
+    verifyChunks(mtu, length, 0);
+  }
+
+  private void verifyChunks(int mtu, int length, int numRetries) {
     ArgumentCaptor<byte[]> chunkCaptor = ArgumentCaptor.forClass(byte[].class);
     int numInvocations = length / mtu;
     if (length % mtu != 0) {
       numInvocations++;
     }
+    numInvocations += numRetries;
+
     verify(gattIO, times(numInvocations)).write(any(), any(), chunkCaptor.capture());
 
+    int index = 0;
+    for (; index < numRetries; index++) {
+      byte[] chunk = chunkCaptor.getAllValues().get(index);
+      assertEquals(mtu, chunk.length);
+
+      byte[] original = Arrays.copyOfRange(data, 0, mtu);
+      assertEquals(Arrays.hashCode(original), Arrays.hashCode(chunk));
+    }
+
     for (int i = 0; i < length / mtu; i++) {
-      byte[] chunk = chunkCaptor.getAllValues().get(i);
+      byte[] chunk = chunkCaptor.getAllValues().get(index);
       assertEquals(mtu, chunk.length);
 
       byte[] original = Arrays.copyOfRange(data, i * mtu, i * mtu + mtu);
       assertEquals(Arrays.hashCode(original), Arrays.hashCode(chunk));
+
+      index++;
     }
 
     if (length % mtu != 0) {
-      byte[] chunk = chunkCaptor.getAllValues().get(length / mtu);
+      byte[] chunk = chunkCaptor.getAllValues().get(index);
       assertEquals(length % mtu, chunk.length);
 
       byte[] original = Arrays.copyOfRange(data, (length / mtu) * mtu, ((length / mtu) * mtu) + (length % mtu));
