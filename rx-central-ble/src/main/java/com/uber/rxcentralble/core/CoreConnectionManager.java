@@ -16,7 +16,6 @@
 package com.uber.rxcentralble.core;
 
 import android.content.Context;
-import android.os.Build;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
 
@@ -28,8 +27,6 @@ import com.uber.rxcentralble.GattIO;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ScanMatcher;
 import com.uber.rxcentralble.Scanner;
-import com.uber.rxcentralble.core.scanners.JellyBeanScanner;
-import com.uber.rxcentralble.core.scanners.LollipopScanner;
 
 import java.util.concurrent.TimeUnit;
 
@@ -66,17 +63,16 @@ public class CoreConnectionManager implements ConnectionManager {
     this(context, bluetoothDetector, new CoreGattIO.Factory());
   }
 
+  public CoreConnectionManager(Context context, BluetoothDetector bluetoothDetector, GattIO.Factory gattIOFactory) {
+    this(context, bluetoothDetector, gattIOFactory, new CoreScannerFactory());
+  }
+
   public CoreConnectionManager(
           Context context,
           BluetoothDetector bluetoothDetector,
-          GattIO.Factory gattIOFactory) {
-
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-      this.scanner = new JellyBeanScanner();
-    } else {
-      this.scanner = new LollipopScanner();
-    }
-
+          GattIO.Factory gattIOFactory,
+          Scanner.Factory scannerFactory) {
+    this.scanner = scannerFactory.produce();
     this.context = context;
     this.bluetoothDetector = bluetoothDetector;
     this.gattIOFactory = gattIOFactory;

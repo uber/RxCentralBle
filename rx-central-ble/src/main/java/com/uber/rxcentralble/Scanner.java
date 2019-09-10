@@ -35,4 +35,15 @@ public interface Scanner {
    */
   @SchedulerSupport(SchedulerSupport.NONE)
   Observable<ScanData> scan();
+
+  /** Factory pattern to produce Scanner instances. */
+  interface Factory {
+
+    /**
+     * Produce an appropriate Scanner for the current android version.
+     *
+     * @return a Scanner instance.
+     */
+    Scanner produce();
+  }
 }
