@@ -15,9 +15,6 @@
  */
 package com.uber.rxcentralble;
 
-import android.bluetooth.BluetoothDevice;
-import android.content.Context;
-
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.annotations.SchedulerSupport;
