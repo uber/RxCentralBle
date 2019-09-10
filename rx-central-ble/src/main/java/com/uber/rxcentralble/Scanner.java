@@ -15,6 +15,9 @@
  */
 package com.uber.rxcentralble;
 
+import android.bluetooth.BluetoothDevice;
+import android.content.Context;
+
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.annotations.SchedulerSupport;
@@ -35,4 +38,15 @@ public interface Scanner {
    */
   @SchedulerSupport(SchedulerSupport.NONE)
   Observable<ScanData> scan();
+
+  /** Factory pattern to produce Scanner instances. */
+  interface Factory {
+
+    /**
+     * Produce an appropriate Scanner for the current android version.
+     *
+     * @return a Scanner instance.
+     */
+    Scanner produce();
+  }
 }
