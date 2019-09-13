@@ -7,12 +7,13 @@ import android.os.Build;
 import com.uber.rxcentralble.BluetoothDetector;
 import com.uber.rxcentralble.ConnectionManager;
 import com.uber.rxcentralble.GattManager;
+import com.uber.rxcentralble.Scanner;
 import com.uber.rxcentralble.Utils;
 import com.uber.rxcentralble.core.CoreBluetoothDetector;
 import com.uber.rxcentralble.core.CoreConnectionManager;
 import com.uber.rxcentralble.core.CoreGattIO;
 import com.uber.rxcentralble.core.CoreGattManager;
-import com.uber.rxcentralble.core.scanners.ThrottledLollipopScanner;
+import com.uber.rxcentralble.core.CoreScannerFactory;
 
 import java.util.UUID;
 
@@ -32,6 +33,7 @@ public class SampleApplication extends Application {
   private ConnectionManager connectionManager;
   private GattManager gattManager;
   private BluetoothDetector bluetoothDetector;
+  private Scanner scanner;
 
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   @Override
@@ -40,8 +42,9 @@ public class SampleApplication extends Application {
 
     bluetoothDetector = new CoreBluetoothDetector(this.getApplicationContext());
     gattManager = new CoreGattManager();
+    scanner = new CoreScannerFactory().produce();
     connectionManager = new CoreConnectionManager(this, bluetoothDetector,
-            new ThrottledLollipopScanner(), new CoreGattIO.Factory());
+            scanner, new CoreGattIO.Factory());
   }
 
   public BluetoothDetector getBluetoothDetector() {
@@ -54,5 +57,9 @@ public class SampleApplication extends Application {
 
   public GattManager getGattManager() {
     return gattManager;
+  }
+
+  public Scanner getScanner() {
+    return scanner;
   }
 }
