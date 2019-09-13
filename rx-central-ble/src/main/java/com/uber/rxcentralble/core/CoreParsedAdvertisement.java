@@ -51,8 +51,8 @@ public class CoreParsedAdvertisement implements ParsedAdvertisement {
           parseAdData(dataType, length - 1, byteBuffer);
         }
       }
-    } catch (BufferUnderflowException e) {
-      // Ignore the exception; data will remain empty.
+    } catch (Exception e) {
+      // Ignore exceptions; further data will not be parsed.
     }
   }
 
@@ -96,55 +96,51 @@ public class CoreParsedAdvertisement implements ParsedAdvertisement {
     byteBuffer.position(position);
 
     int bytesRead = 0;
-    try {
-      switch (dataType) {
-        case AD_INCOMPLETE_16BIT_SVC_LIST:
-        case AD_COMPLETE_16BIT_SVC_LIST:
-          while (bytesRead < length) {
-            int uuid = byteBuffer.getShort();
-            servicesList.add(Utils.uuidFromInteger(uuid));
-            bytesRead += 2;
-          }
-          break;
-        case AD_INCOMPLETE_32BIT_SVC_LIST:
-        case AD_COMPLETE_32BIT_SVC_LIST:
-          while (bytesRead < length) {
-            int uuid = byteBuffer.getInt();
-            servicesList.add(Utils.uuidFromInteger(uuid));
-            bytesRead += 4;
-          }
-          break;
-        case AD_INCOMPLETE_128BIT_SVC_LIST:
-        case AD_COMPLETE_128BIT_SVC_LIST:
-          while (bytesRead < length) {
-            long lsb = byteBuffer.getLong();
-            long msb = byteBuffer.getLong();
-            servicesList.add(new UUID(msb, lsb));
-            bytesRead += 16;
-          }
-          break;
-        case AD_SHORTENED_LOCAL_NAME:
-        case AD_COMPLETE_LOCAL_NAME:
-          try {
-            byte[] nameBytes = new byte[length];
-            byteBuffer.get(nameBytes);
-            name = new String(nameBytes, "UTF-8");
-          } catch (UnsupportedEncodingException e) {
-            // Ignore the exception; data will remain empty.
-          }
-          break;
-        case AD_MANUFACTURER_DATA:
-          int mfgId = byteBuffer.getShort() & 0xFFFF;
-          byte[] data = new byte[length - 2];
-          byteBuffer.get(data);
-          mfgDataMap.put(mfgId, data);
-          break;
-        default:
-          byteBuffer.position(byteBuffer.position() + length);
-          break;
-      }
-    } catch (BufferUnderflowException e) {
-      // Ignore the exception; data will remain empty.
+    switch (dataType) {
+      case AD_INCOMPLETE_16BIT_SVC_LIST:
+      case AD_COMPLETE_16BIT_SVC_LIST:
+        while (bytesRead < length) {
+          int uuid = byteBuffer.getShort();
+          servicesList.add(Utils.uuidFromInteger(uuid));
+          bytesRead += 2;
+        }
+        break;
+      case AD_INCOMPLETE_32BIT_SVC_LIST:
+      case AD_COMPLETE_32BIT_SVC_LIST:
+        while (bytesRead < length) {
+          int uuid = byteBuffer.getInt();
+          servicesList.add(Utils.uuidFromInteger(uuid));
+          bytesRead += 4;
+        }
+        break;
+      case AD_INCOMPLETE_128BIT_SVC_LIST:
+      case AD_COMPLETE_128BIT_SVC_LIST:
+        while (bytesRead < length) {
+          long lsb = byteBuffer.getLong();
+          long msb = byteBuffer.getLong();
+          servicesList.add(new UUID(msb, lsb));
+          bytesRead += 16;
+        }
+        break;
+      case AD_SHORTENED_LOCAL_NAME:
+      case AD_COMPLETE_LOCAL_NAME:
+        try {
+          byte[] nameBytes = new byte[length];
+          byteBuffer.get(nameBytes);
+          name = new String(nameBytes, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+          // Ignore the exception; data will remain empty.
+        }
+        break;
+      case AD_MANUFACTURER_DATA:
+        int mfgId = byteBuffer.getShort() & 0xFFFF;
+        byte[] data = new byte[length - 2];
+        byteBuffer.get(data);
+        mfgDataMap.put(mfgId, data);
+        break;
+      default:
+        byteBuffer.position(byteBuffer.position() + length);
+        break;
     }
   }
 

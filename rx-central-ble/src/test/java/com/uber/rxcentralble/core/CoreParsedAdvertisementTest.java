@@ -29,6 +29,8 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class CoreParsedAdvertisementTest {
 
@@ -88,6 +90,62 @@ public class CoreParsedAdvertisementTest {
       (byte) 0xC7
   };
 
+  /** EIR 0x01; EIR 0xFF; EIR 0x08; EIR 0x03; EIR 0x07. */
+  private static final byte[] INVALID_RAW_DATA = new byte[] {
+          0x02,
+          0x01,
+          0x06,
+          0x02, // Invalid length!
+          (byte) 0xFF,
+          0x15,
+          0x04,
+          0x00,
+          0x00,
+          0x00,
+          0x01,
+          0x41,
+          0x41,
+          0x45,
+          0x4D,
+          0x46,
+          0x46,
+          0x00,
+          0x0B,
+          0x08,
+          0x55,
+          0x62,
+          0x65,
+          0x72,
+          0x42,
+          0x65,
+          0x61,
+          0x63,
+          0x6F,
+          0x6E,
+          0x03,
+          0x03,
+          0x0A,
+          0x18,
+          0x11,
+          0x07,
+          (byte) 0x97,
+          0x4A,
+          (byte) 0xA1,
+          0x75,
+          0x15,
+          (byte) 0xC7,
+          0x65,
+          (byte) 0x81,
+          0x36,
+          0x4F,
+          0x42,
+          0x79,
+          0x00,
+          0x10,
+          (byte) 0x97,
+          (byte) 0xC7
+  };
+
   private static final String DEVICE_NAME = "UberBeacon";
   private static final int RSSI = 100;
   private static final int MFG_ID = 0x0415;
@@ -100,15 +158,22 @@ public class CoreParsedAdvertisementTest {
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-
-    parsedAdvertisement = new CoreParsedAdvertisement(RAW_DATA);
   }
 
   @Test
   public void test() {
+    parsedAdvertisement = new CoreParsedAdvertisement(RAW_DATA);
     assertEquals(DEVICE_NAME, parsedAdvertisement.getName());
     assertArrayEquals(
         Arrays.copyOfRange(RAW_DATA, 7, 18), parsedAdvertisement.getManufacturerData(MFG_ID));
     assertEquals(true, parsedAdvertisement.hasService(SVC_UUID));
+  }
+
+  @Test
+  public void test_invalid_data() {
+    parsedAdvertisement = new CoreParsedAdvertisement(INVALID_RAW_DATA);
+
+    // Also asserts no exception was thrown.
+    assertNull(parsedAdvertisement.getName());
   }
 }
