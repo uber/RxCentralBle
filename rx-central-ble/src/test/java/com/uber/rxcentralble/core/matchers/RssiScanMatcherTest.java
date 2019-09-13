@@ -14,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.robolectric.RobolectricTestRunner;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.ObservableTransformer;
