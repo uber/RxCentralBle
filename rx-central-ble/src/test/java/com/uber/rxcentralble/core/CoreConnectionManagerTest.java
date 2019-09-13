@@ -51,7 +51,7 @@ import static com.uber.rxcentralble.ConnectionManager.State.SCANNING;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-public class CoreConnectionManagerTest  {
+public class CoreConnectionManagerTest {
 
   @Mock Context context;
   @Mock BluetoothDetector bluetoothDetector;
@@ -211,6 +211,64 @@ public class CoreConnectionManagerTest  {
     connectTestObserver.assertValue(gattIO);
   }
 
+  @Test
+  public void connect_direct_failed_connectFailed() {
+    prepareDirectConnect();
+
+    scanDataPublishSubject.onNext(scanData);
+
+    testScheduler.advanceTimeBy(1000, TimeUnit.MILLISECONDS);
+
+    connectableStatePublishSubject.onError(
+            new ConnectionError(ConnectionError.Code.CONNECT_FAILED));
+
+    stateTestObserver.assertValues(DISCONNECTED, CONNECTING, DISCONNECTED_WITH_ERROR);
+    connectTestObserver.assertError(
+        throwable -> {
+          ConnectionError error = (ConnectionError) throwable;
+          return error != null && error.getCode() == ConnectionError.Code.CONNECT_FAILED;
+        });
+  }
+
+  @Test
+  public void connect_direct_failed_connectTimeout() {
+    prepareDirectConnect();
+
+    scanDataPublishSubject.onNext(scanData);
+
+    testScheduler.advanceTimeBy(DEFAULT_CONNECTION_TIMEOUT + 1000, TimeUnit.MILLISECONDS);
+
+    stateTestObserver.assertValues(DISCONNECTED, CONNECTING, DISCONNECTED_WITH_ERROR);
+    connectTestObserver.assertError(
+        throwable -> {
+          ConnectionError error = (ConnectionError) throwable;
+          return error != null && error.getCode() == ConnectionError.Code.CONNECT_TIMEOUT;
+        });
+  }
+
+  @Test
+  public void connect_direct_bluetoothDisabled() {
+    bluetoothEnabledRelay.accept(false);
+
+    prepareDirectConnect();
+
+    connectTestObserver.assertEmpty();
+  }
+
+  @Test
+  public void connect_direct_connected() {
+    prepareDirectConnect();
+
+    scanDataPublishSubject.onNext(scanData);
+
+    testScheduler.advanceTimeBy(1000, TimeUnit.MILLISECONDS);
+
+    connectableStatePublishSubject.onNext(GattIO.ConnectableState.CONNECTED);
+
+    stateTestObserver.assertValues(DISCONNECTED, CONNECTING, CONNECTED);
+    connectTestObserver.assertValue(gattIO);
+  }
+
   private void prepareConnect(boolean matcherEquals) {
     scanMatcher =
         new ScanMatcher() {
@@ -231,10 +289,15 @@ public class CoreConnectionManagerTest  {
         };
 
     stateTestObserver = coreConnectionManager.state().test();
-    connectTestObserver =
-        coreConnectionManager
-            .connect(
-                scanMatcher, DEFAULT_SCAN_TIMEOUT, ConnectionManager.DEFAULT_CONNECTION_TIMEOUT)
-            .test();
+    connectTestObserver = coreConnectionManager
+        .connect(scanMatcher, DEFAULT_SCAN_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT)
+        .test();
+  }
+
+  private void prepareDirectConnect() {
+    stateTestObserver = coreConnectionManager.state().test();
+    connectTestObserver = coreConnectionManager
+        .connect(bluetoothDevice, DEFAULT_CONNECTION_TIMEOUT)
+        .test();
   }
 }

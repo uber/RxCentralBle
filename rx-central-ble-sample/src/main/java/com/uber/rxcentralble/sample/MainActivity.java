@@ -9,11 +9,16 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.uber.rxcentralble.BluetoothDetector;
+import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.ConnectionManager;
 import com.uber.rxcentralble.GattManager;
+import com.uber.rxcentralble.Irrelevant;
 import com.uber.rxcentralble.RxCentralLogger;
+import com.uber.rxcentralble.ScanMatcher;
+import com.uber.rxcentralble.Scanner;
 import com.uber.rxcentralble.core.operations.Read;
 import com.uber.rxcentralble.core.operations.RegisterNotification;
 import com.uber.rxcentralble.core.operations.RequestMtu;
@@ -36,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
   private BluetoothDetector bluetoothDetector;
   private ConnectionManager connectionManager;
   private GattManager gattManager;
+  private Scanner scanner;
 
   @BindView(R.id.nameEditText)
   EditText nameEditText;
@@ -45,6 +51,9 @@ public class MainActivity extends AppCompatActivity {
 
   @BindView(R.id.buttonConnect)
   Button connectButton;
+
+  @BindView(R.id.toggleButtonDirectConnect)
+  ToggleButton directConnectToggle;
 
   Disposable bluetoothDetection;
   Disposable connection;
@@ -59,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
     bluetoothDetector = ((SampleApplication) getApplication()).getBluetoothDetector();
     connectionManager = ((SampleApplication) getApplication()).getConnectionManager();
     gattManager = ((SampleApplication) getApplication()).getGattManager();
+    scanner = ((SampleApplication) getApplication()).getScanner();
 
     Timber.plant(new TextViewLoggingTree(logTextView));
 
@@ -75,49 +85,10 @@ public class MainActivity extends AppCompatActivity {
 
   @OnClick(R.id.buttonConnect)
   public void connectClick() {
-    if (connection == null) {
-      String name = nameEditText.getEditableText().toString();
-      if (!TextUtils.isEmpty(name)) {
-        Timber.i("Connect to:  " + name);
-        connectButton.setText("Cancel");
-
-        connection = connectionManager
-                .connect(new NameScanMatcher(name),
-                        DEFAULT_SCAN_TIMEOUT,
-                        DEFAULT_CONNECTION_TIMEOUT)
-                .retryWhen(errors ->
-                        errors.flatMap(
-                            error -> {
-                              /*if (error instanceof ConnectionError) {
-                                return Observable.just(Irrelevant.INSTANCE);
-                              }*/
-
-                              return Observable.error(error);
-                            }))
-                .subscribe(
-                        gattIO -> {
-                          gattManager.setGattIO(gattIO);
-
-                          AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Disconnect"));
-                          Timber.i("Connected to: " + name);
-                          Timber.i("Max Write Length (MTU): " + gattIO.getMaxWriteLength());
-                        },
-                        error -> {
-                          connection.dispose();
-                          connection = null;
-
-                          AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Connect"));
-                          Timber.i("Connection error: " + error.getMessage());
-                        }
-                );
-
-      }
+    if (directConnectToggle.isChecked()) {
+      directConnect();
     } else {
-      connection.dispose();
-      connection = null;
-
-      connectButton.setText("Connect");
-      Timber.i("Disconnected");
+      connect();
     }
   }
 
@@ -221,6 +192,105 @@ public class MainActivity extends AppCompatActivity {
       bluetoothDetection.dispose();
       bluetoothDetection = null;
       Timber.i("Bluetooth Detection Deactivated");
+    }
+  }
+
+  private void connect() {
+    if (connection == null) {
+      String name = nameEditText.getEditableText().toString();
+      if (!TextUtils.isEmpty(name)) {
+        Timber.i("Connect to:  " + name);
+        connectButton.setText("Cancel");
+
+        connection = connectionManager
+                .connect(new NameScanMatcher(name),
+                        DEFAULT_SCAN_TIMEOUT * 20,
+                        DEFAULT_CONNECTION_TIMEOUT)
+                .retryWhen(errors ->
+                        errors.flatMap(
+                            error -> {
+                              if (error instanceof ConnectionError) {
+                                return Observable.just(Irrelevant.INSTANCE);
+                              }
+
+                              return Observable.error(error);
+                            }))
+                .subscribe(
+                        gattIO -> {
+                          gattManager.setGattIO(gattIO);
+
+                          AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Disconnect"));
+                          Timber.i("Connected to: " + name);
+                          Timber.i("Max Write Length (MTU): " + gattIO.getMaxWriteLength());
+                        },
+                        error -> {
+                          connection.dispose();
+                          connection = null;
+
+                          AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Connect"));
+                          Timber.i("Connection error: " + error.getMessage());
+                        }
+                );
+
+      }
+    } else {
+      connection.dispose();
+      connection = null;
+
+      connectButton.setText("Connect");
+      Timber.i("Disconnected");
+    }
+  }
+
+  private void directConnect() {
+    if (connection == null) {
+      String name = nameEditText.getEditableText().toString();
+      if (!TextUtils.isEmpty(name)) {
+        Timber.i("Connect to:  " + name);
+        connectButton.setText("Cancel");
+
+        ScanMatcher scanMatcher = new NameScanMatcher(name);
+        connection = scanner
+                .scan()
+                .compose(scanMatcher.match())
+                .firstOrError()
+                .flatMapObservable(scanData ->
+                        connectionManager.connect(
+                                scanData.getBluetoothDevice(),
+                                DEFAULT_CONNECTION_TIMEOUT))
+                .retryWhen(errors ->
+                        errors.flatMap(
+                            error -> {
+                              if (error instanceof ConnectionError) {
+                                return Observable.just(Irrelevant.INSTANCE);
+                              }
+
+                              return Observable.error(error);
+                            }))
+                .subscribe(
+                        gattIO -> {
+                          gattManager.setGattIO(gattIO);
+
+                          AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Disconnect"));
+                          Timber.i("Connected to: " + name);
+                          Timber.i("Max Write Length (MTU): " + gattIO.getMaxWriteLength());
+                        },
+                        error -> {
+                          connection.dispose();
+                          connection = null;
+
+                          AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Connect"));
+                          Timber.i("Connection error: " + error.getMessage());
+                        }
+                );
+
+      }
+    } else {
+      connection.dispose();
+      connection = null;
+
+      connectButton.setText("Connect");
+      Timber.i("Disconnected");
     }
   }
 }

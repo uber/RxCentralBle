@@ -15,6 +15,7 @@
  */
 package com.uber.rxcentralble.core;
 
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
@@ -79,10 +80,10 @@ public class CoreConnectionManager implements ConnectionManager {
   }
 
   public CoreConnectionManager(
-      Context context,
-      BluetoothDetector bluetoothDetector,
-      Scanner scanner,
-      GattIO.Factory gattIOFactory) {
+          Context context,
+          BluetoothDetector bluetoothDetector,
+          Scanner scanner,
+          GattIO.Factory gattIOFactory) {
 
     this.context = context;
     this.bluetoothDetector = bluetoothDetector;
@@ -102,8 +103,30 @@ public class CoreConnectionManager implements ConnectionManager {
     this.scanTimeoutMs = scanTimeoutMs;
     this.connectionTimeoutMs = connectionTimeoutMs;
     this.scanMatcher = scanMatcher;
-    this.sharedGattIOObservable = createdSharedObservable(context, bluetoothDetector, scanner,
-            scanMatcher, gattIOFactory);
+    this.sharedGattIOObservable = bluetoothDetector
+            .enabled()
+            .distinctUntilChanged()
+            .filter(enabled -> enabled)
+            .compose(scan(scanner, scanMatcher))
+            .switchMap(scanData -> connect(scanData.getBluetoothDevice()))
+            .compose(shareConnection());
+
+    return sharedGattIOObservable;
+  }
+
+  @Override
+  public Observable<GattIO> connect(BluetoothDevice bluetoothDevice, int connectionTimeoutMs) {
+    if (sharedGattIOObservable != null) {
+      return sharedGattIOObservable;
+    }
+
+    this.connectionTimeoutMs = connectionTimeoutMs;
+    this.sharedGattIOObservable = bluetoothDetector
+            .enabled()
+            .distinctUntilChanged()
+            .filter(enabled -> enabled)
+            .switchMap(enabled -> connect(bluetoothDevice))
+            .compose(shareConnection());
 
     return sharedGattIOObservable;
   }
@@ -113,79 +136,58 @@ public class CoreConnectionManager implements ConnectionManager {
     return stateRelay;
   }
 
-  private Observable<GattIO> createdSharedObservable(Context context,
-                    BluetoothDetector bluetoothDetector,
-                    Scanner scanner,
-                    ScanMatcher scanMatcher,
-                    GattIO.Factory gattIOFactory) {
-
-    return bluetoothDetector
-                .enabled()
-                .distinctUntilChanged()
-                .filter(enabled -> enabled)
-                .compose(scan(scanner, scanMatcher))
-                .compose(connectGatt(gattIOFactory, context))
-                .doOnNext(connectableGattIO -> stateRelay.accept(State.CONNECTED))
-                .doOnDispose(() -> stateRelay.accept(State.DISCONNECTED))
-                .doOnError(error -> stateRelay.accept(State.DISCONNECTED_WITH_ERROR))
-                .doFinally(() -> {
-                  this.sharedGattIOObservable = null;
-                  this.scanMatcher = null;
-                })
-                .map(connectableGattIO -> connectableGattIO)
-                .replay(1)
-                .refCount();
-  }
-
   private ObservableTransformer<Boolean, ScanData> scan(Scanner scanner, ScanMatcher scanMatcher) {
     return bluetoothEnabled ->
             bluetoothEnabled
-                .doOnNext(connectableGattIO -> stateRelay.accept(State.SCANNING))
-                .switchMap(enabled -> scanner.scan())
-                .compose(scanMatcher.match())
-                .firstOrError()
-                .timeout(
-                    scanTimeoutMs,
-                    TimeUnit.MILLISECONDS,
-                    Single.error(new ConnectionError(SCAN_TIMEOUT)))
-                .toObservable();
+                    .doOnNext(connectableGattIO -> stateRelay.accept(State.SCANNING))
+                    .switchMap(enabled -> scanner.scan())
+                    .compose(scanMatcher.match())
+                    .firstOrError()
+                    .timeout(
+                            scanTimeoutMs,
+                            TimeUnit.MILLISECONDS,
+                            Single.error(new ConnectionError(SCAN_TIMEOUT)))
+                    .toObservable();
   }
 
-  private ObservableTransformer<ScanData, GattIO> connectGatt(
-      GattIO.Factory gattIOFactory, Context context) {
-    return scanDataObservable ->
-        scanDataObservable
-            .doOnNext(sd -> stateRelay.accept(State.CONNECTING))
-            .flatMap(
-                scanData -> {
-                  GattIO gattIO =
-                      gattIOFactory.produce(scanData.getBluetoothDevice(), context);
+  private Observable<GattIO> connect(BluetoothDevice bluetoothDevice) {
+    stateRelay.accept(State.CONNECTING);
 
-                  Observable<Pair<GattIO.ConnectableState, GattIO>>
-                      gattIoConnection =
-                          gattIO
-                              .connect()
-                              .withLatestFrom(Observable.just(gattIO), Pair::new);
+    GattIO gattIO = gattIOFactory.produce(bluetoothDevice, context);
 
-                  Observable<GattIO.ConnectableState> gattIoConnectionTimeout =
-                      gattIO
-                          .connect()
-                          .filter(s -> s == GattIO.ConnectableState.CONNECTED)
-                          .firstOrError()
-                          .timeout(
-                              connectionTimeoutMs,
-                              TimeUnit.MILLISECONDS,
-                              Single.error(new ConnectionError(CONNECT_TIMEOUT)))
-                          .toObservable();
+    Observable<Pair<GattIO.ConnectableState, GattIO>> gattIoConnection =
+            gattIO
+                    .connect()
+                    .withLatestFrom(Observable.just(gattIO), Pair::new);
 
-                  return Observable.combineLatest(
-                      gattIoConnection,
-                      gattIoConnectionTimeout,
-                      (connection, timeout) -> connection);
-                })
-            .filter(
-                stateGattPair ->
-                    stateGattPair.first == GattIO.ConnectableState.CONNECTED)
+    Observable<GattIO.ConnectableState> gattIoConnectionTimeout =
+            gattIO
+                    .connect()
+                    .filter(s -> s == GattIO.ConnectableState.CONNECTED)
+                    .firstOrError()
+                    .timeout(
+                            connectionTimeoutMs,
+                            TimeUnit.MILLISECONDS,
+                            Single.error(new ConnectionError(CONNECT_TIMEOUT)))
+                    .toObservable();
+
+    return Observable.combineLatest(gattIoConnection, gattIoConnectionTimeout,
+        (connection, timeout) -> connection)
+            .filter(stateGattPair -> stateGattPair.first == GattIO.ConnectableState.CONNECTED)
             .map(statePair -> statePair.second);
+  }
+
+  private ObservableTransformer<GattIO, GattIO> shareConnection() {
+    return gattIO -> gattIO
+            .doOnNext(connectableGattIO -> stateRelay.accept(State.CONNECTED))
+            .doOnDispose(() -> stateRelay.accept(State.DISCONNECTED))
+            .doOnError(error -> stateRelay.accept(State.DISCONNECTED_WITH_ERROR))
+            .doFinally(() -> {
+              this.sharedGattIOObservable = null;
+              this.scanMatcher = null;
+            })
+            .map(connectableGattIO -> connectableGattIO)
+            .replay(1)
+            .refCount();
   }
 }

@@ -14,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.robolectric.RobolectricTestRunner;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.ObservableTransformer;
@@ -35,10 +34,8 @@ public class RssiScanMatcherTest {
   @Mock BluetoothDevice bluetoothDevice2;
   @Mock ServiceScanMatcher serviceScanMatcher;
 
-  private UUID uuid = UUID.randomUUID();
   private Relay<ScanData> scanDataRelay = BehaviorRelay.create();
   private TestObserver<ScanData> scanDataTestObserver;
-  private ObservableTransformer<ScanData, ScanData> serviceMatch;
 
   private RssiScanMatcher rssiScanMatcher;
 
@@ -54,7 +51,7 @@ public class RssiScanMatcherTest {
     when(bluetoothDevice1.getAddress()).thenReturn("bluetoothDevice1");
     when(bluetoothDevice2.getAddress()).thenReturn("bluetoothDevice2");
 
-    rssiScanMatcher = new RssiScanMatcher(uuid, serviceScanMatcher);
+    rssiScanMatcher = new RssiScanMatcher(serviceScanMatcher);
   }
 
   @After
@@ -94,7 +91,9 @@ public class RssiScanMatcherTest {
 
     scanDataRelay.accept(scanData2);
 
-    testScheduler.advanceTimeBy(2500, TimeUnit.MILLISECONDS);
+    testScheduler.advanceTimeBy(
+            RssiScanMatcher.DEFAULT_MATCH_DELAY_MS + 500,
+            TimeUnit.MILLISECONDS);
 
     scanDataTestObserver.assertValue(scanData2);
   }

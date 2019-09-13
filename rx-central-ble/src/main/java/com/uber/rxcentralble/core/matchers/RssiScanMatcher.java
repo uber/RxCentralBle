@@ -5,7 +5,6 @@ import com.uber.rxcentralble.ScanMatcher;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.ObservableTransformer;
@@ -15,12 +14,20 @@ import io.reactivex.ObservableTransformer;
  */
 public class RssiScanMatcher implements ScanMatcher {
 
+  public static final int DEFAULT_MATCH_DELAY_MS = 3000;
+
   private final ServiceScanMatcher serviceScanMatcher;
+  private final int matchDelayMs;
   private final Map<String, ScanData> matches = new HashMap<>();
   private final Object syncRoot = new Object();
 
-  public RssiScanMatcher(UUID serviceUuid, ServiceScanMatcher serviceScanMatcher) {
+  public RssiScanMatcher(ServiceScanMatcher serviceScanMatcher) {
+    this(serviceScanMatcher, DEFAULT_MATCH_DELAY_MS);
+  }
+
+  public RssiScanMatcher(ServiceScanMatcher serviceScanMatcher, int matchDelayMs) {
     this.serviceScanMatcher = serviceScanMatcher;
+    this.matchDelayMs = matchDelayMs;
   }
 
   /**
@@ -40,7 +47,7 @@ public class RssiScanMatcher implements ScanMatcher {
                         matches.put(scanData.getBluetoothDevice().getAddress(), scanData);
                       }
                     })
-                    .delay(1500, TimeUnit.MILLISECONDS)
+                    .delay(matchDelayMs, TimeUnit.MILLISECONDS)
                     .filter(match -> {
                       synchronized (syncRoot) {
                         for (ScanData other : matches.values()) {

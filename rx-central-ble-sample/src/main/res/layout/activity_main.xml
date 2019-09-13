@@ -97,4 +97,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/gapButton" />
 
+    <ToggleButton
+        android:id="@+id/toggleButtonDirectConnect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="ToggleButton"
+        android:textOff="Direct Cnct Off"
+        android:textOn="Direct Cnct On"
+        android:visibility="visible"
+        app:layout_constraintStart_toEndOf="@+id/toggleButtonBleDetect"
+        app:layout_constraintTop_toBottomOf="@+id/gapButton" />
+
 </android.support.constraint.ConstraintLayout>
