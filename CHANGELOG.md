@@ -45,7 +45,7 @@ Version 1.0.7
 
 * Rewind byte buffer in AbstractWrite to support reactive retry logic
 
-Version 1.1.0
+Version 1.1.1
 ----------------------------
 
 * Improved Scanning and Connectivity APIs
