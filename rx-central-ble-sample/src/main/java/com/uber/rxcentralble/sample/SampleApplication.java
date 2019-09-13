@@ -10,7 +10,9 @@ import com.uber.rxcentralble.GattManager;
 import com.uber.rxcentralble.Utils;
 import com.uber.rxcentralble.core.CoreBluetoothDetector;
 import com.uber.rxcentralble.core.CoreConnectionManager;
+import com.uber.rxcentralble.core.CoreGattIO;
 import com.uber.rxcentralble.core.CoreGattManager;
+import com.uber.rxcentralble.core.scanners.ThrottledLollipopScanner;
 
 import java.util.UUID;
 
@@ -38,7 +40,8 @@ public class SampleApplication extends Application {
 
     bluetoothDetector = new CoreBluetoothDetector(this.getApplicationContext());
     gattManager = new CoreGattManager();
-    connectionManager = new CoreConnectionManager(this, bluetoothDetector);
+    connectionManager = new CoreConnectionManager(this, bluetoothDetector,
+            new ThrottledLollipopScanner(), new CoreGattIO.Factory());
   }
 
   public BluetoothDetector getBluetoothDetector() {

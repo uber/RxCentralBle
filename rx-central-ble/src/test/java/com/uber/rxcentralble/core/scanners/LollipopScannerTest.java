@@ -66,7 +66,7 @@ public class LollipopScannerTest {
   TestObserver<ScanData> scanDataTestObserver;
 
   @Before
-  public void setup() throws Exception {
+  public void setup() {
     MockitoAnnotations.initMocks(this);
 
     mockStatic(BluetoothAdapter.class);

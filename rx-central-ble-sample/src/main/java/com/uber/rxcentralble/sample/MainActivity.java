@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
 
         connection = connectionManager
                 .connect(new NameScanMatcher(name),
-                        DEFAULT_SCAN_TIMEOUT,
+                        DEFAULT_SCAN_TIMEOUT * 20,
                         DEFAULT_CONNECTION_TIMEOUT)
                 .retryWhen(errors ->
                         errors.flatMap(
