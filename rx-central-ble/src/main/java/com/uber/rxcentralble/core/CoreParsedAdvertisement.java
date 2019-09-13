@@ -6,7 +6,6 @@ import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.Utils;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
