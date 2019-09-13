@@ -73,7 +73,7 @@ public abstract class AbstractWrite<T> implements GattOperation<T> {
 
   @Override
   public Single<T> executeWithResult(GattIO gattIO) {
-    return writeSingle
+    return result()
             .doOnSubscribe(disposable -> execute(gattIO));
   }
 
