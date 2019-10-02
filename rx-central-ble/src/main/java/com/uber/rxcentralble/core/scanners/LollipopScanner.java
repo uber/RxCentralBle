@@ -41,8 +41,12 @@ import io.reactivex.subjects.PublishSubject;
 import static com.uber.rxcentralble.ConnectionError.Code.SCAN_FAILED;
 import static com.uber.rxcentralble.ConnectionError.Code.SCAN_IN_PROGRESS;
 
-/** Core Scanner implementation for API >= 21 (i.e. Lollipop). */
+/**
+ * Lollipop Scanner has been deprecated and should not be used.  Please migrate to
+ * {@link ThrottledLollipopScanner}.
+ */
 @TargetApi(21)
+@Deprecated
 public class LollipopScanner implements Scanner {
 
   private final ParsedAdvertisement.Factory parsedAdDataFactory;
@@ -50,16 +54,23 @@ public class LollipopScanner implements Scanner {
 
   @Nullable private PublishSubject<ScanData> scanDataSubject;
 
+  @Deprecated
   public LollipopScanner() {
     this(new CoreParsedAdvertisement.Factory());
   }
 
+  @Deprecated
   public LollipopScanner(ParsedAdvertisement.Factory parsedAdDataFactory) {
     this.parsedAdDataFactory = parsedAdDataFactory;
     this.scanCallback = getScanCallback();
   }
 
+  /**
+   * Lollipop Scanner has been deprecated and should not be used.  Please migrate to
+   * {@link ThrottledLollipopScanner}.
+   */
   @Override
+  @Deprecated
   public Observable<ScanData> scan() {
     if (scanDataSubject != null) {
       return Observable.error(new ConnectionError(SCAN_IN_PROGRESS));
@@ -76,6 +87,16 @@ public class LollipopScanner implements Scanner {
             })
         .doFinally(this::stopScan)
         .share();
+  }
+
+  /**
+   * Lollipop Scanner has been deprecated and should not be used.  Please migrate to
+   * {@link ThrottledLollipopScanner}.
+   */
+  @Override
+  @Deprecated
+  public Observable<ScanData> scan(int scanLatency) {
+    return scan();
   }
 
   private void startScan(PublishSubject scanDataSubject) {

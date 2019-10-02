@@ -97,18 +97,15 @@ public class JellyBeanScannerTest {
   }
 
   @Test
-  public void scan_failed_inProgress() {
+  public void scan_share_inProgress() {
     when(bluetoothAdapter.isEnabled()).thenReturn(true);
     when(BluetoothAdapter.getDefaultAdapter()).thenReturn(bluetoothAdapter);
 
     scanner.scan().test();
     scanDataTestObserver = scanner.scan().test();
 
-    scanDataTestObserver.assertError(
-        throwable -> {
-          ConnectionError error = (ConnectionError) throwable;
-          return error != null && error.getCode() == ConnectionError.Code.SCAN_IN_PROGRESS;
-        });
+    scanDataTestObserver.assertNoErrors();
+    scanDataTestObserver.hasSubscription();
   }
 
   @Test

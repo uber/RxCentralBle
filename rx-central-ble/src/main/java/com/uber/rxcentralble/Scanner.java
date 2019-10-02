@@ -15,6 +15,8 @@
  */
 package com.uber.rxcentralble;
 
+import android.support.annotation.IntRange;
+
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.annotations.SchedulerSupport;
@@ -23,7 +25,12 @@ import io.reactivex.annotations.SchedulerSupport;
 public interface Scanner {
 
   /**
-   * Scan for peripherals that match the provided ScanMatcher.
+   * Run scans at low latency by default.
+   */
+  int DEFAULT_SCAN_MODE = 2; // SCAN_MODE_LOW_LATENCY
+
+  /**
+   * Scan for peripherals.
    *
    * <dl>
    *   <dt><b>Scheduler:</b>
@@ -35,6 +42,21 @@ public interface Scanner {
    */
   @SchedulerSupport(SchedulerSupport.NONE)
   Observable<ScanData> scan();
+
+  /**
+   * Scan for peripherals with a target latency.
+   *
+   * <dl>
+   *   <dt><b>Scheduler:</b>
+   *   <dd>{@code connect} does not operate by default on a particular {@link Scheduler}.
+   * </dl>
+   *
+   * @param scanLatency latency setting for scanning operation.
+   * @return Observable stream of discovered peripheral ScanDat or else an error.
+   * {@link ConnectionError} will occur in cases where you canretry scanning
+   */
+  @SchedulerSupport(SchedulerSupport.NONE)
+  Observable<ScanData> scan(@IntRange(from = -1, to = 2) int scanLatency);
 
   /** Factory pattern to produce Scanner instances. */
   interface Factory {
