@@ -30,7 +30,6 @@ import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 
 import static com.uber.rxcentralble.ConnectionError.Code.SCAN_FAILED;
-import static com.uber.rxcentralble.ConnectionError.Code.SCAN_IN_PROGRESS;
 
 /** Core Scanner implementation for API < 21 (i.e. JellyBean) */
 @TargetApi(18)
@@ -40,6 +39,7 @@ public class JellyBeanScanner implements Scanner {
   private final BluetoothAdapter.LeScanCallback leScanCallback;
 
   @Nullable private PublishSubject<ScanData> scanDataSubject;
+  @Nullable private Observable<ScanData> sharedScanData;
 
   public JellyBeanScanner() {
     this(new CoreParsedAdvertisement.Factory());
@@ -52,21 +52,31 @@ public class JellyBeanScanner implements Scanner {
 
   @Override
   public Observable<ScanData> scan() {
-    if (scanDataSubject != null) {
-      return Observable.error(new ConnectionError(SCAN_IN_PROGRESS));
+    if (scanDataSubject == null) {
+      this.scanDataSubject = PublishSubject.create();
+      this.sharedScanData = scanDataSubject
+              .doOnSubscribe(
+                  d -> {
+                    if (scanDataSubject != null) {
+                      startScan(scanDataSubject);
+                    }
+                  })
+              .doFinally(this::stopScan)
+              .share();
     }
 
-    this.scanDataSubject = PublishSubject.create();
+    return sharedScanData;
+  }
 
-    return scanDataSubject
-        .doOnSubscribe(
-            d -> {
-              if (scanDataSubject != null) {
-                startScan(scanDataSubject);
-              }
-            })
-        .doFinally(this::stopScan)
-        .share();
+  /**
+   * Scan latency is ignored on JellyBean as it is only supported on Android 5+.
+   *
+   * @param scanLatency latency setting for scanning operation.
+   * @return stream of scan data from discovered peripherals.
+   */
+  @Override
+  public Observable<ScanData> scan(int scanLatency) {
+    return scan();
   }
 
   private void startScan(PublishSubject scanDataSubject) {
@@ -102,7 +112,8 @@ public class JellyBeanScanner implements Scanner {
       }
     }
 
-    scanDataSubject = null;
+    this.scanDataSubject = null;
+    this.sharedScanData = null;
   }
 
   /** Implementation of Android LeScanCallback. */

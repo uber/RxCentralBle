@@ -19,7 +19,7 @@ import android.os.Build;
 
 import com.uber.rxcentralble.Scanner;
 import com.uber.rxcentralble.core.scanners.JellyBeanScanner;
-import com.uber.rxcentralble.core.scanners.LollipopScanner;
+import com.uber.rxcentralble.core.scanners.ThrottledLollipopScanner;
 
 /** Core implementation of Scanner.Factory. */
 public class CoreScannerFactory implements Scanner.Factory {
@@ -29,7 +29,7 @@ public class CoreScannerFactory implements Scanner.Factory {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
       return new JellyBeanScanner();
     } else {
-      return new LollipopScanner();
+      return new ThrottledLollipopScanner();
     }
   }
 }
