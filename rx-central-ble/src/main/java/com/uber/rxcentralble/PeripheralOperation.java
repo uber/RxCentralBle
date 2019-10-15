@@ -18,12 +18,12 @@ package com.uber.rxcentralble;
 import io.reactivex.Single;
 
 /**
- * An operation to perform against a peripheral. Meant to be queued on a GattManager implementation
+ * An operation to perform against a peripheral. Meant to be queued on a PeripheralManager implementation
  * for serial execution.
  *
  * @param <T> the type of data returned by this successful operation.
  */
-public interface GattOperation<T> {
+public interface PeripheralOperation<T> {
 
   /**
    * A Single emission for the result of execution.
@@ -39,17 +39,17 @@ public interface GattOperation<T> {
    * Execute the operation. There must be an active subscription to the result stream for the
    * operation to execute.
    *
-   * @param gattIO the GattIO to execute the operation against.
+   * @param peripheral the Peripheral to execute the operation against.
    */
-  void execute(GattIO gattIO);
+  void execute(Peripheral peripheral);
 
   /**
    * Execute the operation upon subscription to returned result stream.
    *
    * <p>This allows for one-line execution and result subscription.
    *
-   * @param gattIO the GattIO to execute the operation against.
+   * @param peripheral the Peripheral to execute the operation against.
    * @return the Single result.
    */
-  Single<T> executeWithResult(GattIO gattIO);
+  Single<T> executeWithResult(Peripheral peripheral);
 }

@@ -6,13 +6,13 @@ import android.os.Build;
 
 import com.uber.rxcentralble.BluetoothDetector;
 import com.uber.rxcentralble.ConnectionManager;
-import com.uber.rxcentralble.GattManager;
+import com.uber.rxcentralble.PeripheralManager;
 import com.uber.rxcentralble.Scanner;
 import com.uber.rxcentralble.Utils;
 import com.uber.rxcentralble.core.CoreBluetoothDetector;
 import com.uber.rxcentralble.core.CoreConnectionManager;
-import com.uber.rxcentralble.core.CoreGattIO;
-import com.uber.rxcentralble.core.CoreGattManager;
+import com.uber.rxcentralble.core.CorePeripheral;
+import com.uber.rxcentralble.core.CorePeripheralManager;
 import com.uber.rxcentralble.core.CoreScannerFactory;
 
 import java.util.UUID;
@@ -31,7 +31,7 @@ public class SampleApplication extends Application {
   public static final UUID DIS_FIRMWARE_UUID = Utils.uuidFromInteger(0x2A26);
 
   private ConnectionManager connectionManager;
-  private GattManager gattManager;
+  private PeripheralManager peripheralManager;
   private BluetoothDetector bluetoothDetector;
   private Scanner scanner;
 
@@ -41,10 +41,10 @@ public class SampleApplication extends Application {
     super.onCreate();
 
     bluetoothDetector = new CoreBluetoothDetector(this.getApplicationContext());
-    gattManager = new CoreGattManager();
+    peripheralManager = new CorePeripheralManager();
     scanner = new CoreScannerFactory().produce();
     connectionManager = new CoreConnectionManager(this, bluetoothDetector,
-            scanner, new CoreGattIO.Factory());
+            scanner, new CorePeripheral.Factory());
   }
 
   public BluetoothDetector getBluetoothDetector() {
@@ -55,8 +55,8 @@ public class SampleApplication extends Application {
     return connectionManager;
   }
 
-  public GattManager getGattManager() {
-    return gattManager;
+  public PeripheralManager getPeripheralManager() {
+    return peripheralManager;
   }
 
   public Scanner getScanner() {

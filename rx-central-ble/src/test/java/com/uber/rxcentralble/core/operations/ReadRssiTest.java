@@ -15,8 +15,8 @@
  */
 package com.uber.rxcentralble.core.operations;
 
-import com.uber.rxcentralble.GattError;
-import com.uber.rxcentralble.GattIO;
+import com.uber.rxcentralble.PeripheralError;
+import com.uber.rxcentralble.Peripheral;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,7 +32,7 @@ import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subjects.SingleSubject;
 
-import static com.uber.rxcentralble.GattError.Code.MISSING_CHARACTERISTIC;
+import static com.uber.rxcentralble.PeripheralError.Code.MISSING_CHARACTERISTIC;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
 public class ReadRssiTest {
 
   @Mock
-  GattIO gattIO;
+  Peripheral peripheral;
 
   private final TestScheduler testScheduler = new TestScheduler();
 
@@ -54,7 +54,7 @@ public class ReadRssiTest {
 
     RxJavaPlugins.setComputationSchedulerHandler(schedulerCallable -> testScheduler);
 
-    when(gattIO.readRssi()).thenReturn(readOperationSingle);
+    when(peripheral.readRssi()).thenReturn(readOperationSingle);
 
     readRssi = new ReadRssi(5000);
     readResultTestObserver = readRssi.result().test();
@@ -67,7 +67,7 @@ public class ReadRssiTest {
 
   @Test
   public void read_timeout() {
-    readRssi.execute(gattIO);
+    readRssi.execute(peripheral);
 
     testScheduler.advanceTimeBy(5000 + 1000, TimeUnit.MILLISECONDS);
 
@@ -76,16 +76,16 @@ public class ReadRssiTest {
 
   @Test
   public void read_error() {
-    readRssi.execute(gattIO);
+    readRssi.execute(peripheral);
 
-    readOperationSingle.onError(new GattError(MISSING_CHARACTERISTIC));
+    readOperationSingle.onError(new PeripheralError(MISSING_CHARACTERISTIC));
 
-    readResultTestObserver.assertError(GattError.class);
+    readResultTestObserver.assertError(PeripheralError.class);
   }
 
   @Test
   public void read_success_verifyOnlyOnce() {
-    readRssi.execute(gattIO);
+    readRssi.execute(peripheral);
 
     int result = 100;
     readOperationSingle.onSuccess(result);
@@ -95,12 +95,12 @@ public class ReadRssiTest {
     TestObserver<Integer> invalidObserver = readRssi.result().test();
     invalidObserver.assertNotComplete();
 
-    verify(gattIO, times(1)).readRssi();
+    verify(peripheral, times(1)).readRssi();
   }
 
   @Test
   public void read_execute_withResult_verifyOnlyOnce() {
-    readResultTestObserver = readRssi.executeWithResult(gattIO).test();
+    readResultTestObserver = readRssi.executeWithResult(peripheral).test();
 
     int result = 100;
     readOperationSingle.onSuccess(result);
@@ -110,6 +110,6 @@ public class ReadRssiTest {
     TestObserver<Integer> invalidObserver = readRssi.result().test();
     invalidObserver.assertNotComplete();
 
-    verify(gattIO, times(1)).readRssi();
+    verify(peripheral, times(1)).readRssi();
   }
 }

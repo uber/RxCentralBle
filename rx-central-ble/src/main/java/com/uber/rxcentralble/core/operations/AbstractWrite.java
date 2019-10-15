@@ -20,8 +20,8 @@ import android.support.v4.util.Pair;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;
-import com.uber.rxcentralble.GattIO;
-import com.uber.rxcentralble.GattOperation;
+import com.uber.rxcentralble.Peripheral;
+import com.uber.rxcentralble.PeripheralOperation;
 import com.uber.rxcentralble.Optional;
 
 import java.nio.ByteBuffer;
@@ -38,17 +38,17 @@ import io.reactivex.SingleTransformer;
  * peripheral may respond to the write that would conclude a completed operation.
  *
  * <p>This operation provides built-in chunking capabilities, where the given data is 'chunked' into
- * individual byte arrays of size determined by the GattIO maxWriteLength(). Each chunk is written
- * to the GattIO in a serial manner and the result Single completes after all chunks have been
+ * individual byte arrays of size determined by the Peripheral maxWriteLength(). Each chunk is written
+ * to the Peripheral in a serial manner and the result Single completes after all chunks have been
  * written to the peripheral.
  *
  * @param <T> the type of result.
  */
-public abstract class AbstractWrite<T> implements GattOperation<T> {
+public abstract class AbstractWrite<T> implements PeripheralOperation<T> {
 
   private final BehaviorRelay<Integer> chunkIndexRelay = BehaviorRelay.createDefault(0);
 
-  private final Relay<Optional<GattIO>> gattRelay = BehaviorRelay.createDefault(Optional.empty());
+  private final Relay<Optional<Peripheral>> peripheralRelay = BehaviorRelay.createDefault(Optional.empty());
   private final Single<T> writeSingle;
 
   public AbstractWrite(UUID svc, UUID chr, byte[] data, int timeoutMs) {
@@ -67,35 +67,35 @@ public abstract class AbstractWrite<T> implements GattOperation<T> {
   }
 
   @Override
-  public void execute(GattIO gattIO) {
-    gattRelay.accept(Optional.of(gattIO));
+  public void execute(Peripheral peripheral) {
+    peripheralRelay.accept(Optional.of(peripheral));
   }
 
   @Override
-  public Single<T> executeWithResult(GattIO gattIO) {
+  public Single<T> executeWithResult(Peripheral peripheral) {
     return result()
-            .doOnSubscribe(disposable -> execute(gattIO));
+            .doOnSubscribe(disposable -> execute(peripheral));
   }
 
-  protected Single<GattIO> write(UUID svc, UUID chr, byte[] data) {
+  protected Single<Peripheral> write(UUID svc, UUID chr, byte[] data) {
     final ByteBuffer byteBuffer = ByteBuffer.wrap(data);
 
-    return gattRelay
+    return peripheralRelay
         .filter(Optional::isPresent)
         .map(Optional::get)
         .firstOrError()
-        .doOnSuccess(g -> gattRelay.accept(Optional.empty()))
-        .flatMapObservable(gattIO -> {
+        .doOnSuccess(g -> peripheralRelay.accept(Optional.empty()))
+        .flatMapObservable(peripheral -> {
           int chunkCount = (int) Math.ceil((double) byteBuffer.remaining()
-                  / (double) gattIO.getMaxWriteLength());
-          return Observable.range(0, chunkCount).map(index -> new Pair<>(gattIO, index));
+                  / (double) peripheral.getMaxWriteLength());
+          return Observable.range(0, chunkCount).map(index -> new Pair<>(peripheral, index));
         })
-        .zipWith(chunkIndexRelay, (gattIndex, chunkIndexRelay) -> gattIndex)
-        .flatMapSingle(
-            gattIndex -> gattIndex.first
-                  .write(svc, chr, chunk(byteBuffer, gattIndex.first.getMaxWriteLength()))
-                  .doOnComplete(() -> chunkIndexRelay.accept(gattIndex.second))
-                  .andThen(Single.just(gattIndex.first)))
+        .zipWith(chunkIndexRelay, (peripheralIndex, chunkIndexRelay) -> peripheralIndex)
+        .flatMapSingle(peripheralIndex ->
+                peripheralIndex.first
+                  .write(svc, chr, chunk(byteBuffer, peripheralIndex.first.getMaxWriteLength()))
+                  .doOnComplete(() -> chunkIndexRelay.accept(peripheralIndex.second))
+                  .andThen(Single.just(peripheralIndex.first)))
         .lastOrError()
         .doOnSubscribe(d -> {
           byteBuffer.rewind();
@@ -103,7 +103,7 @@ public abstract class AbstractWrite<T> implements GattOperation<T> {
         });
   }
 
-  protected abstract SingleTransformer<GattIO, T> postWrite();
+  protected abstract SingleTransformer<Peripheral, T> postWrite();
 
   /**
    * Take a byte array and segment it.

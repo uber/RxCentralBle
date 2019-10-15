@@ -14,7 +14,7 @@ import android.widget.ToggleButton;
 import com.uber.rxcentralble.BluetoothDetector;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.ConnectionManager;
-import com.uber.rxcentralble.GattManager;
+import com.uber.rxcentralble.PeripheralManager;
 import com.uber.rxcentralble.Irrelevant;
 import com.uber.rxcentralble.RxCentralLogger;
 import com.uber.rxcentralble.ScanMatcher;
@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
 
   private BluetoothDetector bluetoothDetector;
   private ConnectionManager connectionManager;
-  private GattManager gattManager;
+  private PeripheralManager peripheralManager;
   private Scanner scanner;
 
   @BindView(R.id.nameEditText)
@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
     bluetoothDetector = ((SampleApplication) getApplication()).getBluetoothDetector();
     connectionManager = ((SampleApplication) getApplication()).getConnectionManager();
-    gattManager = ((SampleApplication) getApplication()).getGattManager();
+    peripheralManager = ((SampleApplication) getApplication()).getPeripheralManager();
     scanner = ((SampleApplication) getApplication()).getScanner();
 
     Timber.plant(new TextViewLoggingTree(logTextView));
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
   @SuppressLint("CheckResult")
   @OnClick(R.id.gapButton)
   public void getGap() {
-    gattManager
+    peripheralManager
         .queueOperation(new Read(SampleApplication.GAP_SVC_UUID, SampleApplication.GAP_DEVICE_NAME_UUID, 5000))
         .map(bytes -> new String(bytes, "UTF-8"))
         .subscribe(
@@ -106,19 +106,19 @@ public class MainActivity extends AppCompatActivity {
   @SuppressLint("CheckResult")
   @OnClick(R.id.batteryButton)
   public void getBattery() {
-    gattManager
+    peripheralManager
         .queueOperation(new Read(SampleApplication.BATTERY_SVC_UUID, SampleApplication.BATTERY_LEVEL_UUID, 5000))
         .map(bytes -> bytes.length > 0 ? (int) bytes[0] : -1)
         .subscribe(
           batteryLevel -> Timber.i("Get Battery: success: " + batteryLevel),
           error -> Timber.i("Get Battery: error: " + error.getMessage()));
 
-    gattManager
+    peripheralManager
         .queueOperation(new RegisterNotification(
                 SampleApplication.BATTERY_SVC_UUID,
                 SampleApplication.BATTERY_LEVEL_UUID,
                 5000))
-        .flatMapObservable(irrelevant -> gattManager.notification(SampleApplication.BATTERY_LEVEL_UUID))
+        .flatMapObservable(irrelevant -> peripheralManager.notification(SampleApplication.BATTERY_LEVEL_UUID))
         .map(bytes -> bytes.length > 0 ? (int) bytes[0] : -1)
         .subscribe(
           batteryLevel -> Timber.i("Notif Battery: success: " + batteryLevel),
@@ -128,35 +128,35 @@ public class MainActivity extends AppCompatActivity {
   @SuppressLint("CheckResult")
   @OnClick(R.id.disButton)
   public void getDIS() {
-    gattManager
+    peripheralManager
             .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_MFG_NAME_UUID, 5000))
             .map(bytes -> new String(bytes, "UTF-8"))
             .subscribe(
               name -> Timber.i("Get DIS Mfg: success: " + name),
               error -> Timber.i("Get DIS Mfg: error: " + error.getMessage()));
 
-    gattManager
+    peripheralManager
             .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_MODEL_UUID, 5000))
             .map(bytes -> new String(bytes, "UTF-8"))
             .subscribe(
               name -> Timber.i("Get DIS Model: success: " + name),
               error -> Timber.i("Get DIS Model: error: " + error.getMessage()));
 
-    gattManager
+    peripheralManager
             .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_SERIAL_UUID, 5000))
             .map(bytes -> new String(bytes, "UTF-8"))
             .subscribe(
               name -> Timber.i("Get DIS Serial: success: " + name),
               error -> Timber.i("Get DIS Serial: error: " + error.getMessage()));
 
-    gattManager
+    peripheralManager
             .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_HARDWARE_UUID, 5000))
             .map(bytes -> new String(bytes, "UTF-8"))
             .subscribe(
               name -> Timber.i("Get DIS Hardware: success: " + name),
               error -> Timber.i("Get DIS Hardware: error: " + error.getMessage()));
 
-    gattManager
+    peripheralManager
             .queueOperation(new Read(SampleApplication.DIS_SVC_UUID, SampleApplication.DIS_FIRMWARE_UUID, 5000))
             .map(bytes -> new String(bytes, "UTF-8"))
             .subscribe(
@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
   @SuppressLint("CheckResult")
   @OnClick(R.id.mtuButton)
   public void getMtu() {
-    gattManager
+    peripheralManager
             .queueOperation(new RequestMtu(512, 5000))
             .subscribe(
               mtu -> Timber.i("MTU: success: " + mtu),
@@ -216,12 +216,12 @@ public class MainActivity extends AppCompatActivity {
                               return Observable.error(error);
                             }))
                 .subscribe(
-                        gattIO -> {
-                          gattManager.setGattIO(gattIO);
+                        peripheral -> {
+                          peripheralManager.setPeripheral(peripheral);
 
                           AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Disconnect"));
                           Timber.i("Connected to: " + name);
-                          Timber.i("Max Write Length (MTU): " + gattIO.getMaxWriteLength());
+                          Timber.i("Max Write Length (MTU): " + peripheral.getMaxWriteLength());
                         },
                         error -> {
                           connection.dispose();
@@ -268,12 +268,12 @@ public class MainActivity extends AppCompatActivity {
                               return Observable.error(error);
                             }))
                 .subscribe(
-                        gattIO -> {
-                          gattManager.setGattIO(gattIO);
+                        peripheral -> {
+                          peripheralManager.setPeripheral(peripheral);
 
                           AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Disconnect"));
                           Timber.i("Connected to: " + name);
-                          Timber.i("Max Write Length (MTU): " + gattIO.getMaxWriteLength());
+                          Timber.i("Max Write Length (MTU): " + peripheral.getMaxWriteLength());
                         },
                         error -> {
                           connection.dispose();

@@ -15,8 +15,8 @@
  */
 package com.uber.rxcentralble.core.operations;
 
-import com.uber.rxcentralble.GattError;
-import com.uber.rxcentralble.GattIO;
+import com.uber.rxcentralble.PeripheralError;
+import com.uber.rxcentralble.Peripheral;
 import com.uber.rxcentralble.Irrelevant;
 
 import org.junit.After;
@@ -46,7 +46,7 @@ import static org.mockito.internal.verification.VerificationModeFactory.times;
 public class WriteTest {
 
   @Mock
-  GattIO gattIO;
+  Peripheral peripheral;
 
   private final TestScheduler testScheduler = new TestScheduler();
   private final UUID svcUuid = UUID.randomUUID();
@@ -63,7 +63,7 @@ public class WriteTest {
 
     RxJavaPlugins.setComputationSchedulerHandler(schedulerCallable -> testScheduler);
 
-    when(gattIO.write(any(), any(), any())).thenReturn(writeCompletable);
+    when(peripheral.write(any(), any(), any())).thenReturn(writeCompletable);
   }
 
   @After
@@ -75,7 +75,7 @@ public class WriteTest {
   public void write_timeout() {
     prepareWrite(20, 128);
     writeResultTestObserver = write.result().test();
-    write.execute(gattIO);
+    write.execute(peripheral);
 
     testScheduler.advanceTimeBy(5000 + 1000, TimeUnit.MILLISECONDS);
 
@@ -86,17 +86,17 @@ public class WriteTest {
   public void write_error() {
     prepareWrite(20, 128);
     writeResultTestObserver = write.result().test();
-    write.execute(gattIO);
+    write.execute(peripheral);
 
-    writeCompletable.onError(new GattError(GattError.Code.MISSING_CHARACTERISTIC));
+    writeCompletable.onError(new PeripheralError(PeripheralError.Code.MISSING_CHARACTERISTIC));
 
-    writeResultTestObserver.assertError(GattError.class);
+    writeResultTestObserver.assertError(PeripheralError.class);
   }
 
   @Test
   public void write_execute_withResult() {
     prepareWrite(20, 128);
-    writeResultTestObserver = write.executeWithResult(gattIO).test();
+    writeResultTestObserver = write.executeWithResult(peripheral).test();
 
     writeCompletable.onComplete();
 
@@ -110,7 +110,7 @@ public class WriteTest {
     prepareWrite(20, 128);
     writeResultTestObserver = write.result().test();
 
-    write.execute(gattIO);
+    write.execute(peripheral);
 
     writeCompletable.onComplete();
 
@@ -124,7 +124,7 @@ public class WriteTest {
     prepareWrite(128, 128);
     writeResultTestObserver = write.result().test();
 
-    write.execute(gattIO);
+    write.execute(peripheral);
 
     writeCompletable.onComplete();
 
@@ -138,7 +138,7 @@ public class WriteTest {
     prepareWrite(256, 47);
     writeResultTestObserver = write.result().test();
 
-    write.execute(gattIO);
+    write.execute(peripheral);
 
     writeCompletable.onComplete();
 
@@ -151,17 +151,17 @@ public class WriteTest {
   public void write_success_after_retry() {
     prepareWrite(20, 128);
 
-    when(gattIO.write(any(), any(), any())).thenReturn(Completable.error(new Exception("TEST")));
+    when(peripheral.write(any(), any(), any())).thenReturn(Completable.error(new Exception("TEST")));
 
     writeResultTestObserver = write
-            .executeWithResult(gattIO)
+            .executeWithResult(peripheral)
             .retryWhen(errors -> errors
                     .delay(1000, TimeUnit.MILLISECONDS))
             .test();
 
     testScheduler.advanceTimeBy(1000, TimeUnit.MILLISECONDS);
 
-    when(gattIO.write(any(), any(), any())).thenReturn(writeCompletable);
+    when(peripheral.write(any(), any(), any())).thenReturn(writeCompletable);
 
     testScheduler.advanceTimeBy(1000, TimeUnit.MILLISECONDS);
 
@@ -173,7 +173,7 @@ public class WriteTest {
   }
 
   private void prepareWrite(int mtu, int length) {
-    when(gattIO.getMaxWriteLength()).thenReturn(mtu);
+    when(peripheral.getMaxWriteLength()).thenReturn(mtu);
 
     data = new byte[length];
     for (int i = 0; i < length; i++) {
@@ -195,7 +195,7 @@ public class WriteTest {
     }
     numInvocations += numRetries;
 
-    verify(gattIO, times(numInvocations)).write(any(), any(), chunkCaptor.capture());
+    verify(peripheral, times(numInvocations)).write(any(), any(), chunkCaptor.capture());
 
     int index = 0;
     for (; index < numRetries; index++) {

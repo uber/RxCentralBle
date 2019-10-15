@@ -22,7 +22,7 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.uber.rxcentralble.BluetoothDetector;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.ConnectionManager;
-import com.uber.rxcentralble.GattIO;
+import com.uber.rxcentralble.Peripheral;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ScanMatcher;
 import com.uber.rxcentralble.Scanner;
@@ -56,8 +56,9 @@ public class CoreConnectionManagerTest {
   @Mock Context context;
   @Mock BluetoothDetector bluetoothDetector;
   @Mock Scanner scanner;
-  @Mock GattIO.Factory gattIOFactory;
-  @Mock GattIO gattIO;
+  @Mock Peripheral.Factory peripheralFactory;
+  @Mock
+  Peripheral peripheral;
   @Mock ScanData scanData;
   @Mock BluetoothDevice bluetoothDevice;
   @Mock ScanMatcher scanMatcher2;
@@ -65,12 +66,12 @@ public class CoreConnectionManagerTest {
   private final TestScheduler testScheduler = new TestScheduler();
   private final BehaviorRelay<Boolean> bluetoothEnabledRelay = BehaviorRelay.createDefault(true);
   private final PublishSubject<ScanData> scanDataPublishSubject = PublishSubject.create();
-  private final PublishSubject<GattIO.ConnectableState> connectableStatePublishSubject =
+  private final PublishSubject<Peripheral.ConnectableState> connectableStatePublishSubject =
       PublishSubject.create();
 
   private ScanMatcher scanMatcher;
   private CoreConnectionManager coreConnectionManager;
-  private TestObserver<GattIO> connectTestObserver;
+  private TestObserver<Peripheral> connectTestObserver;
   private TestObserver<ConnectionManager.State> stateTestObserver;
 
   @Before
@@ -81,13 +82,13 @@ public class CoreConnectionManagerTest {
 
     when(scanner.scan()).thenReturn(scanDataPublishSubject.hide());
     when(bluetoothDetector.enabled()).thenReturn(bluetoothEnabledRelay.hide());
-    when(gattIOFactory.produce(any(), any())).thenReturn(gattIO);
-    when(gattIO.connect()).thenReturn(connectableStatePublishSubject.hide());
+    when(peripheralFactory.produce(any(), any())).thenReturn(peripheral);
+    when(peripheral.connect()).thenReturn(connectableStatePublishSubject.hide());
     when(scanData.getBluetoothDevice()).thenReturn(bluetoothDevice);
 
     coreConnectionManager =
         new CoreConnectionManager(
-            context, bluetoothDetector, scanner, gattIOFactory);
+            context, bluetoothDetector, scanner, peripheralFactory);
   }
 
   @After
@@ -162,7 +163,7 @@ public class CoreConnectionManagerTest {
   public void connect_failed_connectionInProgress() {
     prepareConnect(false);
 
-    TestObserver<GattIO> secondConnect =
+    TestObserver<Peripheral> secondConnect =
         coreConnectionManager
             .connect(
                 scanMatcher2, DEFAULT_SCAN_TIMEOUT, ConnectionManager.DEFAULT_CONNECTION_TIMEOUT)
@@ -179,7 +180,7 @@ public class CoreConnectionManagerTest {
   public void connect_multicasted_for_equalScanMatcher() {
     prepareConnect(true);
 
-    TestObserver<GattIO> secondConnect =
+    TestObserver<Peripheral> secondConnect =
         coreConnectionManager
             .connect(
                 scanMatcher2, DEFAULT_SCAN_TIMEOUT, ConnectionManager.DEFAULT_CONNECTION_TIMEOUT)
@@ -205,10 +206,10 @@ public class CoreConnectionManagerTest {
 
     testScheduler.advanceTimeBy(1000, TimeUnit.MILLISECONDS);
 
-    connectableStatePublishSubject.onNext(GattIO.ConnectableState.CONNECTED);
+    connectableStatePublishSubject.onNext(Peripheral.ConnectableState.CONNECTED);
 
     stateTestObserver.assertValues(DISCONNECTED, SCANNING, CONNECTING, CONNECTED);
-    connectTestObserver.assertValue(gattIO);
+    connectTestObserver.assertValue(peripheral);
   }
 
   @Test
@@ -263,10 +264,10 @@ public class CoreConnectionManagerTest {
 
     testScheduler.advanceTimeBy(1000, TimeUnit.MILLISECONDS);
 
-    connectableStatePublishSubject.onNext(GattIO.ConnectableState.CONNECTED);
+    connectableStatePublishSubject.onNext(Peripheral.ConnectableState.CONNECTED);
 
     stateTestObserver.assertValues(DISCONNECTED, CONNECTING, CONNECTED);
-    connectTestObserver.assertValue(gattIO);
+    connectTestObserver.assertValue(peripheral);
   }
 
   private void prepareConnect(boolean matcherEquals) {

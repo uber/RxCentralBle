@@ -18,13 +18,13 @@ package com.uber.rxcentralble;
 import android.support.annotation.Nullable;
 
 /**
- * A GattError is thrown whenever an issue occurs that prevents function of an operation on {@link
+ * A PeripheralError is thrown whenever an issue occurs that prevents function of an operation on {@link
  * android.bluetooth.BluetoothGatt} and accompanying {@link
  * android.bluetooth.BluetoothGattCallback}.
  *
  * <p>Check the {@code cause} to see if there is a root cause for this error.
  */
-public class GattError extends Exception {
+public class PeripheralError extends Exception {
 
   /**
    * Represents that a call to initiate an operation on {@link android.bluetooth.BluetoothGatt}
@@ -58,19 +58,19 @@ public class GattError extends Exception {
   private final Code code;
   private final int errorStatus;
 
-  public GattError(Code code) {
+  public PeripheralError(Code code) {
     this(code, 0);
   }
 
-  public GattError(Code code, int errorStatus) {
+  public PeripheralError(Code code, int errorStatus) {
     this(code, errorStatus, null);
   }
 
-  public GattError(Code code, @Nullable Throwable cause) {
+  public PeripheralError(Code code, @Nullable Throwable cause) {
     this(code, 0, cause);
   }
 
-  public GattError(Code code, int errorStatus, @Nullable Throwable cause) {
+  public PeripheralError(Code code, int errorStatus, @Nullable Throwable cause) {
     super(cause);
     this.code = code;
     this.errorStatus = errorStatus;

@@ -15,8 +15,8 @@
  */
 package com.uber.rxcentralble.core.operations;
 
-import com.uber.rxcentralble.GattError;
-import com.uber.rxcentralble.GattIO;
+import com.uber.rxcentralble.PeripheralError;
+import com.uber.rxcentralble.Peripheral;
 
 import org.junit.After;
 import org.junit.Before;
@@ -39,7 +39,8 @@ import static org.mockito.Mockito.when;
 
 public class RequestMtuTest {
 
-  @Mock GattIO gattIO;
+  @Mock
+  Peripheral peripheral;
 
   private final TestScheduler testScheduler = new TestScheduler();
 
@@ -53,7 +54,7 @@ public class RequestMtuTest {
 
     RxJavaPlugins.setComputationSchedulerHandler(schedulerCallable -> testScheduler);
 
-    when(gattIO.requestMtu(anyInt())).thenReturn(readOperationSingle);
+    when(peripheral.requestMtu(anyInt())).thenReturn(readOperationSingle);
 
     requestMtu = new RequestMtu(100, 5000);
     readResultTestObserver = requestMtu.result().test();
@@ -66,7 +67,7 @@ public class RequestMtuTest {
 
   @Test
   public void read_timeout() {
-    requestMtu.execute(gattIO);
+    requestMtu.execute(peripheral);
 
     testScheduler.advanceTimeBy(5000 + 1000, TimeUnit.MILLISECONDS);
 
@@ -75,16 +76,16 @@ public class RequestMtuTest {
 
   @Test
   public void read_error() {
-    requestMtu.execute(gattIO);
+    requestMtu.execute(peripheral);
 
-    readOperationSingle.onError(new GattError(GattError.Code.MISSING_CHARACTERISTIC));
+    readOperationSingle.onError(new PeripheralError(PeripheralError.Code.MISSING_CHARACTERISTIC));
 
-    readResultTestObserver.assertError(GattError.class);
+    readResultTestObserver.assertError(PeripheralError.class);
   }
 
   @Test
   public void read_success_verifyOnlyOnce() {
-    requestMtu.execute(gattIO);
+    requestMtu.execute(peripheral);
 
     int result = 100;
     readOperationSingle.onSuccess(result);
@@ -94,12 +95,12 @@ public class RequestMtuTest {
     TestObserver<Integer> invalidObserver = requestMtu.result().test();
     invalidObserver.assertNotComplete();
 
-    verify(gattIO, times(1)).requestMtu(anyInt());
+    verify(peripheral, times(1)).requestMtu(anyInt());
   }
 
   @Test
   public void read_execute_withResult_verifyOnlyOnce() {
-    readResultTestObserver = requestMtu.executeWithResult(gattIO).test();
+    readResultTestObserver = requestMtu.executeWithResult(peripheral).test();
 
     int result = 100;
     readOperationSingle.onSuccess(result);
@@ -109,6 +110,6 @@ public class RequestMtuTest {
     TestObserver<Integer> invalidObserver = requestMtu.result().test();
     invalidObserver.assertNotComplete();
 
-    verify(gattIO, times(1)).requestMtu(anyInt());
+    verify(peripheral, times(1)).requestMtu(anyInt());
   }
 }

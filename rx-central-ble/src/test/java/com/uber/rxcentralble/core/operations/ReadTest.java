@@ -15,8 +15,8 @@
  */
 package com.uber.rxcentralble.core.operations;
 
-import com.uber.rxcentralble.GattError;
-import com.uber.rxcentralble.GattIO;
+import com.uber.rxcentralble.PeripheralError;
+import com.uber.rxcentralble.Peripheral;
 
 import org.junit.After;
 import org.junit.Before;
@@ -40,7 +40,8 @@ import static org.mockito.Mockito.when;
 
 public class ReadTest {
 
-  @Mock GattIO gattIO;
+  @Mock
+  Peripheral peripheral;
 
   private final TestScheduler testScheduler = new TestScheduler();
   private final UUID svcUuid = UUID.randomUUID();
@@ -56,7 +57,7 @@ public class ReadTest {
 
     RxJavaPlugins.setComputationSchedulerHandler(schedulerCallable -> testScheduler);
 
-    when(gattIO.read(any(), any())).thenReturn(readOperationSingle);
+    when(peripheral.read(any(), any())).thenReturn(readOperationSingle);
 
     read = new Read(svcUuid, chrUuid, 5000);
     readResultTestObserver = read.result().test();
@@ -69,7 +70,7 @@ public class ReadTest {
 
   @Test
   public void read_timeout() {
-    read.execute(gattIO);
+    read.execute(peripheral);
 
     testScheduler.advanceTimeBy(5000 + 1000, TimeUnit.MILLISECONDS);
 
@@ -78,16 +79,16 @@ public class ReadTest {
 
   @Test
   public void read_error() {
-    read.execute(gattIO);
+    read.execute(peripheral);
 
-    readOperationSingle.onError(new GattError(GattError.Code.MISSING_CHARACTERISTIC));
+    readOperationSingle.onError(new PeripheralError(PeripheralError.Code.MISSING_CHARACTERISTIC));
 
-    readResultTestObserver.assertError(GattError.class);
+    readResultTestObserver.assertError(PeripheralError.class);
   }
 
   @Test
   public void read_success_verifyOnlyOnce() {
-    read.execute(gattIO);
+    read.execute(peripheral);
 
     byte[] result = new byte[] {0x00};
     readOperationSingle.onSuccess(result);
@@ -97,12 +98,12 @@ public class ReadTest {
     TestObserver<byte[]> invalidObserver = read.result().test();
     invalidObserver.assertNotComplete();
 
-    verify(gattIO, times(1)).read(any(), any());
+    verify(peripheral, times(1)).read(any(), any());
   }
 
   @Test
   public void read_execute_WithResult_verifyOnlyOnce() {
-    readResultTestObserver = read.executeWithResult(gattIO).test();
+    readResultTestObserver = read.executeWithResult(peripheral).test();
 
     byte[] result = new byte[] {0x00};
     readOperationSingle.onSuccess(result);
@@ -112,6 +113,6 @@ public class ReadTest {
     TestObserver<byte[]> invalidObserver = read.result().test();
     invalidObserver.assertNotComplete();
 
-    verify(gattIO, times(1)).read(any(), any());
+    verify(peripheral, times(1)).read(any(), any());
   }
 }

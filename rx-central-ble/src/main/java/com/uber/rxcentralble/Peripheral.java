@@ -14,7 +14,7 @@ import io.reactivex.Single;
 import io.reactivex.annotations.SchedulerSupport;
 
 /** Reactive interface into the underlying platform-level peripheral Bluetooth GATT operators. */
-public interface GattIO {
+public interface Peripheral {
 
   /** State of a connection procedure. */
   enum ConnectableState {
@@ -64,7 +64,7 @@ public interface GattIO {
    * @param svc the UUID of the GATT Service containing the desired Characteristic.
    * @param chr the UUID of the GATT Characteristic to read
    * @return Single of the raw byte array read from the Characteristic, or else an error. Expect
-   *     {@link GattError} for errors that may be retried.
+   *     {@link PeripheralError} for errors that may be retried.
    */
   @SchedulerSupport(SchedulerSupport.NONE)
   Single<byte[]> read(UUID svc, UUID chr);
@@ -81,7 +81,7 @@ public interface GattIO {
    * @param svc the UUID of the GATT Service containing the desired Characteristic.
    * @param chr the UUID of the GATT Characteristic to read
    * @param data raw data to write to the Characteristic.
-   * @return Completable of the operation success, or else an error. Expect {@link GattError} for
+   * @return Completable of the operation success, or else an error. Expect {@link PeripheralError} for
    *     errors that may be retried.
    */
   @SchedulerSupport(SchedulerSupport.NONE)
@@ -102,7 +102,7 @@ public interface GattIO {
    *
    * @param svc the UUID of the GATT Service containing the desired Characteristic.
    * @param chr the UUID of the GATT Characteristic to read
-   * @return Completable of the operation success, or else an error. Expect {@link GattError} for
+   * @return Completable of the operation success, or else an error. Expect {@link PeripheralError} for
    *     errors that may be retried.
    */
   @SchedulerSupport(SchedulerSupport.NONE)
@@ -126,7 +126,7 @@ public interface GattIO {
    * @param chr the UUID of the GATT Characteristic to read.
    * @param preprocessor the Preprocessor used to process the raw data returned by peripheral
    *     notifications.
-   * @return Completable of the operation success, or else an error. Expect {@link GattError} for
+   * @return Completable of the operation success, or else an error. Expect {@link PeripheralError} for
    *     errors that may be retried.
    */
   @SchedulerSupport(SchedulerSupport.NONE)
@@ -148,7 +148,7 @@ public interface GattIO {
    *
    * @param svc the UUID of the GATT Service containing the desired Characteristic.
    * @param chr the UUID of the GATT Characteristic to read. notifications.
-   * @return Completable of the operation success, or else an error. Expect {@link GattError} for
+   * @return Completable of the operation success, or else an error. Expect {@link PeripheralError} for
    *     errors that may be retried.
    */
   @SchedulerSupport(SchedulerSupport.NONE)
@@ -184,7 +184,7 @@ public interface GattIO {
    *
    * @param mtu desired MTU size.
    * @return Single of the actual MTU negotiated with the peripheral, or else an error. Expect
-   *     {@link GattError} for errors that may be retried.
+   *     {@link PeripheralError} for errors that may be retried.
    */
   @TargetApi(21)
   @SchedulerSupport(SchedulerSupport.NONE)
@@ -199,7 +199,7 @@ public interface GattIO {
    *   <dd>{@code readRssi} does not operate by default on a particular {@link Scheduler}.
    * </dl>
    *
-   * @return Single of the RSSI to the peripheral, or else an error. Expect {@link GattError} for
+   * @return Single of the RSSI to the peripheral, or else an error. Expect {@link PeripheralError} for
    *     errors that may be retried.
    */
   @SchedulerSupport(SchedulerSupport.NONE)
@@ -226,16 +226,16 @@ public interface GattIO {
     byte[] process(byte[] bytes);
   }
 
-  /** Factory pattern to produce ConnectableGattIO instances. */
+  /** Factory pattern to produce Peripheral instances. */
   interface Factory {
 
     /**
-     * Produce a ConnectableGattIO instance given a BluetoothDevice and Context.
+     * Produce a Peripheral instance given a BluetoothDevice and Context.
      *
      * @param device the BluetoothDevice representing a peripheral to connect to.
      * @param context Android context.
-     * @return a ConnectableGattIO instance.
+     * @return a Peripheral instance.
      */
-    GattIO produce(BluetoothDevice device, Context context);
+    Peripheral produce(BluetoothDevice device, Context context);
   }
 }

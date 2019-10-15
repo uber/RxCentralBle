@@ -15,13 +15,10 @@
  */
 package com.uber.rxcentralble.core;
 
-import android.bluetooth.BluetoothDevice;
-
 import com.uber.rxcentralble.ParsedAdvertisement;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
@@ -149,8 +146,6 @@ public class CoreParsedAdvertisementTest {
   private static final int RSSI = 100;
   private static final int MFG_ID = 0x0415;
   private static final UUID SVC_UUID = UUID.fromString("c7971000-7942-4f36-8165-c71575a14a97");
-
-  @Mock BluetoothDevice bluetoothDevice;
 
   private ParsedAdvertisement parsedAdvertisement;
 

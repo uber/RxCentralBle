@@ -15,7 +15,7 @@
  */
 package com.uber.rxcentralble.core.operations;
 
-import com.uber.rxcentralble.GattIO;
+import com.uber.rxcentralble.Peripheral;
 import com.uber.rxcentralble.Irrelevant;
 
 import java.util.UUID;
@@ -31,7 +31,7 @@ public class Write extends AbstractWrite<Irrelevant> {
   }
 
   @Override
-  protected SingleTransformer<GattIO, Irrelevant> postWrite() {
-    return single -> single.flatMap(gattIO -> Single.just(Irrelevant.INSTANCE));
+  protected SingleTransformer<Peripheral, Irrelevant> postWrite() {
+    return single -> single.flatMap(peripheral -> Single.just(Irrelevant.INSTANCE));
   }
 }

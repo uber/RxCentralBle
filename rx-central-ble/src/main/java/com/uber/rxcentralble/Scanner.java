@@ -38,7 +38,7 @@ public interface Scanner {
    * </dl>
    *
    * @return Observable stream of discovered peripheral ScanDat or else an error.
-   * {@link ConnectionError} will occur in cases where you canretry scanning
+   * {@link ConnectionError} will occur in cases where you can retry scanning
    */
   @SchedulerSupport(SchedulerSupport.NONE)
   Observable<ScanData> scan();
@@ -51,9 +51,10 @@ public interface Scanner {
    *   <dd>{@code connect} does not operate by default on a particular {@link Scheduler}.
    * </dl>
    *
-   * @param scanLatency latency setting for scanning operation.
+   * @param scanLatency latency setting for scanning operation.  Note that implementation may not
+   *                    respect the desired latency, specifically on pre-Lollipop devices.
    * @return Observable stream of discovered peripheral ScanDat or else an error.
-   * {@link ConnectionError} will occur in cases where you canretry scanning
+   * {@link ConnectionError} will occur in cases where you can retry scanning
    */
   @SchedulerSupport(SchedulerSupport.NONE)
   Observable<ScanData> scan(@IntRange(from = -1, to = 2) int scanLatency);

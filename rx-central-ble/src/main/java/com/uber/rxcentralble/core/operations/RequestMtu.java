@@ -17,8 +17,8 @@ package com.uber.rxcentralble.core.operations;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;
-import com.uber.rxcentralble.GattIO;
-import com.uber.rxcentralble.GattOperation;
+import com.uber.rxcentralble.Peripheral;
+import com.uber.rxcentralble.PeripheralOperation;
 import com.uber.rxcentralble.Optional;
 
 import java.util.concurrent.TimeUnit;
@@ -27,21 +27,21 @@ import io.reactivex.Single;
 
 /**
  * Request to negotiate a new MTU (Maximum Transmission Unit) with a peripheral. The theoretical max
- * MTU is 512. GattIO maxWriteLength() will reflect the most recent negotiated MTU size.
+ * MTU is 512. Peripheral maxWriteLength() will reflect the most recent negotiated MTU size.
  */
-public class RequestMtu implements GattOperation<Integer> {
+public class RequestMtu implements PeripheralOperation<Integer> {
 
-  private final Relay<Optional<GattIO>> gattRelay = BehaviorRelay.createDefault(Optional.empty());
+  private final Relay<Optional<Peripheral>> peripheralRelay = BehaviorRelay.createDefault(Optional.empty());
   private final Single<Integer> resultSingle;
 
   public RequestMtu(int requestedMtu, int timeoutMs) {
     resultSingle =
-        gattRelay
+        peripheralRelay
             .filter(Optional::isPresent)
             .map(Optional::get)
             .firstOrError()
-            .doOnSuccess(g -> gattRelay.accept(Optional.empty()))
-            .flatMap(gattIO -> gattIO.requestMtu(requestedMtu))
+            .doOnSuccess(g -> peripheralRelay.accept(Optional.empty()))
+            .flatMap(peripheral -> peripheral.requestMtu(requestedMtu))
             .toObservable()
             .share()
             .firstOrError()
@@ -54,13 +54,13 @@ public class RequestMtu implements GattOperation<Integer> {
   }
 
   @Override
-  public void execute(GattIO gattIO) {
-    gattRelay.accept(Optional.of(gattIO));
+  public void execute(Peripheral peripheral) {
+    peripheralRelay.accept(Optional.of(peripheral));
   }
 
   @Override
-  public Single<Integer> executeWithResult(GattIO gattIO) {
+  public Single<Integer> executeWithResult(Peripheral peripheral) {
     return resultSingle
-            .doOnSubscribe(disposable -> execute(gattIO));
+            .doOnSubscribe(disposable -> execute(peripheral));
   }
 }

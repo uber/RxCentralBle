@@ -30,8 +30,8 @@ import android.support.v4.util.Pair;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.uber.rxcentralble.ConnectionError;
-import com.uber.rxcentralble.GattError;
-import com.uber.rxcentralble.GattIO;
+import com.uber.rxcentralble.PeripheralError;
+import com.uber.rxcentralble.Peripheral;
 import com.uber.rxcentralble.RxCentralLogger;
 import com.uber.rxcentralble.Utils;
 
@@ -45,32 +45,32 @@ import io.reactivex.Single;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.SingleSubject;
 
-import static com.uber.rxcentralble.GattIO.ConnectableState.CONNECTED;
+import static com.uber.rxcentralble.Peripheral.ConnectableState.CONNECTED;
 import static com.uber.rxcentralble.ConnectionError.Code.DISCONNECTION;
-import static com.uber.rxcentralble.GattError.Code.CHARACTERISTIC_SET_VALUE_FAILED;
-import static com.uber.rxcentralble.GattError.Code.CONNECTION_FAILED;
-import static com.uber.rxcentralble.GattError.Code.MISSING_CHARACTERISTIC;
-import static com.uber.rxcentralble.GattError.Code.READ_CHARACTERISTIC_FAILED;
-import static com.uber.rxcentralble.GattError.Code.READ_RSSI_FAILED;
-import static com.uber.rxcentralble.GattError.Code.REGISTER_NOTIFICATION_FAILED;
-import static com.uber.rxcentralble.GattError.Code.REQUEST_MTU_FAILED;
-import static com.uber.rxcentralble.GattError.Code.UNREGISTER_NOTIFICATION_FAILED;
-import static com.uber.rxcentralble.GattError.Code.WRITE_CHARACTERISTIC_FAILED;
-import static com.uber.rxcentralble.GattError.ERROR_STATUS_CALL_FAILED;
+import static com.uber.rxcentralble.PeripheralError.Code.CHARACTERISTIC_SET_VALUE_FAILED;
+import static com.uber.rxcentralble.PeripheralError.Code.CONNECTION_FAILED;
+import static com.uber.rxcentralble.PeripheralError.Code.MISSING_CHARACTERISTIC;
+import static com.uber.rxcentralble.PeripheralError.Code.READ_CHARACTERISTIC_FAILED;
+import static com.uber.rxcentralble.PeripheralError.Code.READ_RSSI_FAILED;
+import static com.uber.rxcentralble.PeripheralError.Code.REGISTER_NOTIFICATION_FAILED;
+import static com.uber.rxcentralble.PeripheralError.Code.REQUEST_MTU_FAILED;
+import static com.uber.rxcentralble.PeripheralError.Code.UNREGISTER_NOTIFICATION_FAILED;
+import static com.uber.rxcentralble.PeripheralError.Code.WRITE_CHARACTERISTIC_FAILED;
+import static com.uber.rxcentralble.PeripheralError.ERROR_STATUS_CALL_FAILED;
 
-/** Core implementation of GattIO. */
-public class CoreGattIO implements GattIO {
+/** Core implementation of Peripheral. */
+public class CorePeripheral implements Peripheral {
 
   private final BehaviorRelay<Boolean> connectedRelay = BehaviorRelay.createDefault(false);
   private final PublishRelay<Pair<UUID, byte[]>> notificationRelay = PublishRelay.create();
-  private final Map<UUID, GattIO.Preprocessor> preprocessorMap = new HashMap<>();
+  private final Map<UUID, Peripheral.Preprocessor> preprocessorMap = new HashMap<>();
 
   private final Context context;
   private final BluetoothDevice device;
   private final Object syncRoot = new Object();
 
   @Nullable private BluetoothGatt bluetoothGatt;
-  @Nullable private BehaviorSubject<GattIO.ConnectableState> connectionStateSubject;
+  @Nullable private BehaviorSubject<Peripheral.ConnectableState> connectionStateSubject;
   @Nullable private Observable<ConnectableState> sharedConnectionState;
   @Nullable private SingleSubject currentOperation;
   @Nullable private SingleSubject<Pair<UUID, byte[]>> readSubject;
@@ -81,7 +81,7 @@ public class CoreGattIO implements GattIO {
 
   private int mtu = DEFAULT_MTU;
 
-  public CoreGattIO(BluetoothDevice device, Context context) {
+  public CorePeripheral(BluetoothDevice device, Context context) {
     this.context = context;
     this.device = device;
   }
@@ -172,7 +172,7 @@ public class CoreGattIO implements GattIO {
   @Override
   public Single<Integer> requestMtu(int mtu) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-      return Single.error(new GattError(GattError.Code.MINIMUM_SDK_UNSUPPORTED));
+      return Single.error(new PeripheralError(PeripheralError.Code.MINIMUM_SDK_UNSUPPORTED));
     }
 
     final SingleSubject<Integer> scopedSubject = SingleSubject.create();
@@ -236,13 +236,13 @@ public class CoreGattIO implements GattIO {
       connectionStateSubject.onError(
           new ConnectionError(
               ConnectionError.Code.CONNECT_FAILED,
-              new GattError(CONNECTION_FAILED, ERROR_STATUS_CALL_FAILED)));
+              new PeripheralError(CONNECTION_FAILED, ERROR_STATUS_CALL_FAILED)));
     }
   }
 
   private void processRead(SingleSubject<Pair<UUID, byte[]>> scopedSubject, UUID svc, UUID chr) {
     synchronized (syncRoot) {
-      GattError error = subscribeChecks();
+      PeripheralError error = subscribeChecks();
       if (error != null) {
         scopedSubject.onError(error);
         return;
@@ -250,7 +250,7 @@ public class CoreGattIO implements GattIO {
 
       BluetoothGattCharacteristic characteristic = getCharacteristic(svc, chr);
       if (characteristic == null) {
-        scopedSubject.onError(new GattError(MISSING_CHARACTERISTIC));
+        scopedSubject.onError(new PeripheralError(MISSING_CHARACTERISTIC));
         return;
       }
 
@@ -258,7 +258,7 @@ public class CoreGattIO implements GattIO {
       currentOperation = readSubject;
 
       if (bluetoothGatt != null && !bluetoothGatt.readCharacteristic(characteristic)) {
-        readSubject.onError(new GattError(READ_CHARACTERISTIC_FAILED, ERROR_STATUS_CALL_FAILED));
+        readSubject.onError(new PeripheralError(READ_CHARACTERISTIC_FAILED, ERROR_STATUS_CALL_FAILED));
       }
     }
   }
@@ -273,7 +273,7 @@ public class CoreGattIO implements GattIO {
 
   private void processWrite(SingleSubject<UUID> scopedSubject, UUID svc, UUID chr, byte[] data) {
     synchronized (syncRoot) {
-      GattError error = subscribeChecks();
+      PeripheralError error = subscribeChecks();
       if (error != null) {
         scopedSubject.onError(error);
         return;
@@ -281,7 +281,7 @@ public class CoreGattIO implements GattIO {
 
       BluetoothGattCharacteristic characteristic = getCharacteristic(svc, chr);
       if (characteristic == null) {
-        scopedSubject.onError(new GattError(MISSING_CHARACTERISTIC));
+        scopedSubject.onError(new PeripheralError(MISSING_CHARACTERISTIC));
         return;
       }
 
@@ -296,11 +296,11 @@ public class CoreGattIO implements GattIO {
       }
 
       if (!characteristic.setValue(data)) {
-        writeSubject.onError(new GattError(CHARACTERISTIC_SET_VALUE_FAILED));
+        writeSubject.onError(new PeripheralError(CHARACTERISTIC_SET_VALUE_FAILED));
       }
 
       if (bluetoothGatt != null && !bluetoothGatt.writeCharacteristic(characteristic)) {
-        writeSubject.onError(new GattError(WRITE_CHARACTERISTIC_FAILED, ERROR_STATUS_CALL_FAILED));
+        writeSubject.onError(new PeripheralError(WRITE_CHARACTERISTIC_FAILED, ERROR_STATUS_CALL_FAILED));
       }
     }
   }
@@ -316,7 +316,7 @@ public class CoreGattIO implements GattIO {
   private void processRegisterNotification(
       SingleSubject<UUID> scopedSubject, UUID svc, UUID chr, @Nullable Preprocessor preprocessor) {
     synchronized (syncRoot) {
-      GattError error = subscribeChecks();
+      PeripheralError error = subscribeChecks();
       if (error != null) {
         scopedSubject.onError(error);
         return;
@@ -324,7 +324,7 @@ public class CoreGattIO implements GattIO {
 
       BluetoothGattCharacteristic characteristic = getCharacteristic(svc, chr);
       if (characteristic == null) {
-        scopedSubject.onError(new GattError(MISSING_CHARACTERISTIC));
+        scopedSubject.onError(new PeripheralError(MISSING_CHARACTERISTIC));
         return;
       }
 
@@ -334,7 +334,7 @@ public class CoreGattIO implements GattIO {
       if (bluetoothGatt != null) {
         error = setCharacteristicNotification(bluetoothGatt, characteristic, true);
         if (error != null) {
-          registerNotificationSubject.onError(new GattError(REGISTER_NOTIFICATION_FAILED, error));
+          registerNotificationSubject.onError(new PeripheralError(REGISTER_NOTIFICATION_FAILED, error));
         } else {
           preprocessorMap.put(chr, preprocessor);
         }
@@ -345,7 +345,7 @@ public class CoreGattIO implements GattIO {
   private void processUnregisterNotification(
       SingleSubject<UUID> scopedSubject, UUID svc, UUID chr) {
     synchronized (syncRoot) {
-      GattError error = subscribeChecks();
+      PeripheralError error = subscribeChecks();
       if (error != null) {
         scopedSubject.onError(error);
         return;
@@ -353,7 +353,7 @@ public class CoreGattIO implements GattIO {
 
       BluetoothGattCharacteristic characteristic = getCharacteristic(svc, chr);
       if (characteristic == null) {
-        scopedSubject.onError(new GattError(MISSING_CHARACTERISTIC));
+        scopedSubject.onError(new PeripheralError(MISSING_CHARACTERISTIC));
         return;
       }
 
@@ -363,7 +363,7 @@ public class CoreGattIO implements GattIO {
       if (bluetoothGatt != null) {
         error = setCharacteristicNotification(bluetoothGatt, characteristic, false);
         if (error != null) {
-          registerNotificationSubject.onError(new GattError(UNREGISTER_NOTIFICATION_FAILED, error));
+          registerNotificationSubject.onError(new PeripheralError(UNREGISTER_NOTIFICATION_FAILED, error));
         }
       }
     }
@@ -380,7 +380,7 @@ public class CoreGattIO implements GattIO {
   @TargetApi(21)
   private void processRequestMtu(SingleSubject<Integer> scopedSubject, int mtu) {
     synchronized (syncRoot) {
-      GattError error = subscribeChecks();
+      PeripheralError error = subscribeChecks();
       if (error != null) {
         scopedSubject.onError(error);
         return;
@@ -390,7 +390,7 @@ public class CoreGattIO implements GattIO {
       currentOperation = requestMtuSubject;
 
       if (bluetoothGatt != null && !bluetoothGatt.requestMtu(mtu)) {
-        requestMtuSubject.onError(new GattError(REQUEST_MTU_FAILED, ERROR_STATUS_CALL_FAILED));
+        requestMtuSubject.onError(new PeripheralError(REQUEST_MTU_FAILED, ERROR_STATUS_CALL_FAILED));
       }
     }
   }
@@ -405,7 +405,7 @@ public class CoreGattIO implements GattIO {
 
   private void processReadRssi(SingleSubject<Integer> scopedSubject) {
     synchronized (syncRoot) {
-      GattError error = subscribeChecks();
+      PeripheralError error = subscribeChecks();
       if (error != null) {
         scopedSubject.onError(error);
         return;
@@ -415,7 +415,7 @@ public class CoreGattIO implements GattIO {
       currentOperation = readRssiSubject;
 
       if (bluetoothGatt != null && !bluetoothGatt.readRemoteRssi()) {
-        readRssiSubject.onError(new GattError(READ_RSSI_FAILED, ERROR_STATUS_CALL_FAILED));
+        readRssiSubject.onError(new PeripheralError(READ_RSSI_FAILED, ERROR_STATUS_CALL_FAILED));
       }
     }
   }
@@ -429,13 +429,13 @@ public class CoreGattIO implements GattIO {
   }
 
   @Nullable
-  private GattError subscribeChecks() {
+  private PeripheralError subscribeChecks() {
     if (!isConnected()) {
-      return new GattError(GattError.Code.DISCONNECTED);
+      return new PeripheralError(PeripheralError.Code.DISCONNECTED);
     }
 
     if (currentOperation != null && currentOperation.hasObservers()) {
-      return new GattError(GattError.Code.OPERATION_IN_PROGRESS);
+      return new PeripheralError(PeripheralError.Code.OPERATION_IN_PROGRESS);
     }
 
     return null;
@@ -446,16 +446,16 @@ public class CoreGattIO implements GattIO {
   }
 
   @Nullable
-  private GattError setCharacteristicNotification(
+  private PeripheralError setCharacteristicNotification(
       BluetoothGatt bluetoothGatt, BluetoothGattCharacteristic characteristic, boolean enable) {
 
     BluetoothGattDescriptor cccd = characteristic.getDescriptor(CCCD_UUID);
     if (cccd == null) {
-      return new GattError(GattError.Code.SET_CHARACTERISTIC_NOTIFICATION_CCCD_MISSING);
+      return new PeripheralError(PeripheralError.Code.SET_CHARACTERISTIC_NOTIFICATION_CCCD_MISSING);
     }
 
     if (!bluetoothGatt.setCharacteristicNotification(characteristic, enable)) {
-      return new GattError(GattError.Code.SET_CHARACTERISTIC_NOTIFICATION_FAILED);
+      return new PeripheralError(PeripheralError.Code.SET_CHARACTERISTIC_NOTIFICATION_FAILED);
     }
 
     int properties = characteristic.getProperties();
@@ -469,7 +469,7 @@ public class CoreGattIO implements GattIO {
           == BluetoothGattCharacteristic.PROPERTY_INDICATE) {
         value = BluetoothGattDescriptor.ENABLE_INDICATION_VALUE;
       } else {
-        return new GattError(GattError.Code.SET_CHARACTERISTIC_NOTIFICATION_MISSING_PROPERTY);
+        return new PeripheralError(PeripheralError.Code.SET_CHARACTERISTIC_NOTIFICATION_MISSING_PROPERTY);
       }
     } else {
       value = BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE;
@@ -478,11 +478,11 @@ public class CoreGattIO implements GattIO {
     characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
 
     if (!cccd.setValue(value)) {
-      return new GattError(CHARACTERISTIC_SET_VALUE_FAILED);
+      return new PeripheralError(CHARACTERISTIC_SET_VALUE_FAILED);
     }
 
     if (!bluetoothGatt.writeDescriptor(cccd)) {
-      return new GattError(GattError.Code.WRITE_DESCRIPTOR_FAILED, ERROR_STATUS_CALL_FAILED);
+      return new PeripheralError(PeripheralError.Code.WRITE_DESCRIPTOR_FAILED, ERROR_STATUS_CALL_FAILED);
     }
 
     return null;
@@ -521,23 +521,23 @@ public class CoreGattIO implements GattIO {
                   connectionStateSubject.onError(
                       new ConnectionError(
                           ConnectionError.Code.CONNECT_FAILED,
-                          new GattError(
-                              GattError.Code.SERVICE_DISCOVERY_FAILED, ERROR_STATUS_CALL_FAILED)));
+                          new PeripheralError(
+                              PeripheralError.Code.SERVICE_DISCOVERY_FAILED, ERROR_STATUS_CALL_FAILED)));
                 }
               } else {
                 connectionStateSubject.onError(
                     new ConnectionError(
                         ConnectionError.Code.CONNECT_FAILED,
-                        new GattError(CONNECTION_FAILED, status)));
+                        new PeripheralError(CONNECTION_FAILED, status)));
               }
             } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
               if (status == 0 || status == 8) {
                 connectionStateSubject.onError(
                     new ConnectionError(
-                        DISCONNECTION, new GattError(GattError.Code.CONNECTION_LOST, status)));
+                        DISCONNECTION, new PeripheralError(PeripheralError.Code.CONNECTION_LOST, status)));
               } else {
                 connectionStateSubject.onError(
-                    new ConnectionError(DISCONNECTION, new GattError(CONNECTION_FAILED, status)));
+                    new ConnectionError(DISCONNECTION, new PeripheralError(CONNECTION_FAILED, status)));
               }
 
               gatt.close();
@@ -560,7 +560,7 @@ public class CoreGattIO implements GattIO {
               connectionStateSubject.onError(
                   new ConnectionError(
                       ConnectionError.Code.CONNECT_FAILED,
-                      new GattError(GattError.Code.SERVICE_DISCOVERY_FAILED, status)));
+                      new PeripheralError(PeripheralError.Code.SERVICE_DISCOVERY_FAILED, status)));
             }
           }
         }
@@ -625,7 +625,7 @@ public class CoreGattIO implements GattIO {
               registerNotificationSubject,
               descriptor.getCharacteristic().getUuid(),
               status,
-              GattError.Code.WRITE_DESCRIPTOR_FAILED);
+              PeripheralError.Code.WRITE_DESCRIPTOR_FAILED);
         }
       }
 
@@ -636,7 +636,7 @@ public class CoreGattIO implements GattIO {
         }
 
         if (status == 0) {
-          CoreGattIO.this.mtu = mtu;
+          CorePeripheral.this.mtu = mtu;
         }
 
         operationResult(requestMtuSubject, mtu, status, REQUEST_MTU_FAILED);
@@ -671,29 +671,29 @@ public class CoreGattIO implements GattIO {
           @Nullable SingleSubject<T> operationSubject,
           T result,
           int status,
-          GattError.Code errorType) {
+          PeripheralError.Code errorType) {
         synchronized (syncRoot) {
           if (currentOperation == operationSubject && operationSubject != null) {
             if (status == 0) {
               operationSubject.onSuccess(result);
             } else {
-              operationSubject.onError(new GattError(errorType, status));
+              operationSubject.onError(new PeripheralError(errorType, status));
             }
           } else if (currentOperation != null) {
-            GattError cause = new GattError(GattError.Code.OPERATION_RESULT_MISMATCH);
-            currentOperation.onError(new GattError(errorType, status, cause));
+            PeripheralError cause = new PeripheralError(PeripheralError.Code.OPERATION_RESULT_MISMATCH);
+            currentOperation.onError(new PeripheralError(errorType, status, cause));
           }
         }
       }
     };
   }
 
-  /** Implementation of Factory to produce GattIO instances. */
-  public static class Factory implements GattIO.Factory {
+  /** Implementation of Factory to produce Peripheral instances. */
+  public static class Factory implements Peripheral.Factory {
 
     @Override
-    public GattIO produce(BluetoothDevice device, Context context) {
-      return new CoreGattIO(device, context);
+    public Peripheral produce(BluetoothDevice device, Context context) {
+      return new CorePeripheral(device, context);
     }
   }
 }
