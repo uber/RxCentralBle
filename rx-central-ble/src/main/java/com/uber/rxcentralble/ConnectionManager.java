@@ -63,13 +63,13 @@ public interface ConnectionManager {
    * @param connectionTimeoutMs connection timeout in milliseconds. This is defined by the period
    *     between matching a peripheral for connection and establishing a connection. If a timeout
    *     occurs, a {@link ConnectionError} with CONNECT_TIMEOUT code.  Must be positive.
-   * @return Observable stream of connected GattIO. In event of an error, expect {@link
+   * @return Observable stream of connected Peripheral. In event of an error, expect {@link
    *     ConnectionError} for errors that may be retried for a new connection attempt.
    */
   @SchedulerSupport(SchedulerSupport.NONE)
-  Observable<GattIO> connect(ScanMatcher scanMatcher,
-                             @IntRange(from = 0, to = 1740000) int scanTimeoutMs,
-                             @IntRange(from = 0) int connectionTimeoutMs);
+  Observable<Peripheral> connect(ScanMatcher scanMatcher,
+                                 @IntRange(from = 0, to = 1740000) int scanTimeoutMs,
+                                 @IntRange(from = 0) int connectionTimeoutMs);
 
   /**
    * Connect to a Bluetooth LE peripheral. Initiate the operation by subscribing to the returned Observable.
@@ -85,12 +85,12 @@ public interface ConnectionManager {
    * @param connectionTimeoutMs connection timeout in milliseconds. This is defined by the period
    *     between matching a peripheral for connection and establishing a connection. If a timeout
    *     occurs, a {@link ConnectionError} with CONNECT_TIMEOUT code.  Must be positive.
-   * @return Observable stream of connected GattIO. In event of an error, expect {@link
+   * @return Observable stream of connected Peripheral. In event of an error, expect {@link
    *     ConnectionError} for errors that may be retried for a new connection attempt.
    */
   @SchedulerSupport(SchedulerSupport.NONE)
-  Observable<GattIO> connect(BluetoothDevice bluetoothDevice,
-                             @IntRange(from = 0) int connectionTimeoutMs);
+  Observable<Peripheral> connect(BluetoothDevice bluetoothDevice,
+                                 @IntRange(from = 0) int connectionTimeoutMs);
 
   /**
    * Observe the internal state of the {@link ConnectionManager}.

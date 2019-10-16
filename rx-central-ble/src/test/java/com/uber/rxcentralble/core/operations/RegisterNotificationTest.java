@@ -15,8 +15,8 @@
  */
 package com.uber.rxcentralble.core.operations;
 
-import com.uber.rxcentralble.GattError;
-import com.uber.rxcentralble.GattIO;
+import com.uber.rxcentralble.PeripheralError;
+import com.uber.rxcentralble.Peripheral;
 import com.uber.rxcentralble.Irrelevant;
 
 import org.junit.After;
@@ -41,7 +41,8 @@ import static org.mockito.Mockito.when;
 
 public class RegisterNotificationTest {
 
-  @Mock GattIO gattIO;
+  @Mock
+  Peripheral peripheral;
 
   private final TestScheduler testScheduler = new TestScheduler();
   private final UUID svcUuid = UUID.randomUUID();
@@ -57,7 +58,7 @@ public class RegisterNotificationTest {
 
     RxJavaPlugins.setComputationSchedulerHandler(schedulerCallable -> testScheduler);
 
-    when(gattIO.registerNotification(any(), any(), any())).thenReturn(registerCompletable);
+    when(peripheral.registerNotification(any(), any(), any())).thenReturn(registerCompletable);
 
     registerNotification = new RegisterNotification(svcUuid, chrUuid, 5000);
     registerResultTestObserver = registerNotification.result().test();
@@ -70,7 +71,7 @@ public class RegisterNotificationTest {
 
   @Test
   public void register_timeout() {
-    registerNotification.execute(gattIO);
+    registerNotification.execute(peripheral);
 
     testScheduler.advanceTimeBy(5000 + 1000, TimeUnit.MILLISECONDS);
 
@@ -79,16 +80,16 @@ public class RegisterNotificationTest {
 
   @Test
   public void register_error() {
-    registerNotification.execute(gattIO);
+    registerNotification.execute(peripheral);
 
-    registerCompletable.onError(new GattError(GattError.Code.MISSING_CHARACTERISTIC));
+    registerCompletable.onError(new PeripheralError(PeripheralError.Code.MISSING_CHARACTERISTIC));
 
-    registerResultTestObserver.assertError(GattError.class);
+    registerResultTestObserver.assertError(PeripheralError.class);
   }
 
   @Test
   public void register_success_verifyOnlyOnce() {
-    registerNotification.execute(gattIO);
+    registerNotification.execute(peripheral);
 
     registerCompletable.onComplete();
 
@@ -97,12 +98,12 @@ public class RegisterNotificationTest {
     TestObserver<Irrelevant> invalidObserver = registerNotification.result().test();
     invalidObserver.assertNotComplete();
 
-    verify(gattIO, times(1)).registerNotification(any(), any(), any());
+    verify(peripheral, times(1)).registerNotification(any(), any(), any());
   }
 
   @Test
   public void register_execute_withResult_verifyOnlyOnce() {
-    registerResultTestObserver = registerNotification.executeWithResult(gattIO).test();
+    registerResultTestObserver = registerNotification.executeWithResult(peripheral).test();
 
     registerCompletable.onComplete();
 
@@ -111,6 +112,6 @@ public class RegisterNotificationTest {
     TestObserver<Irrelevant> invalidObserver = registerNotification.result().test();
     invalidObserver.assertNotComplete();
 
-    verify(gattIO, times(1)).registerNotification(any(), any(), any());
+    verify(peripheral, times(1)).registerNotification(any(), any(), any());
   }
 }

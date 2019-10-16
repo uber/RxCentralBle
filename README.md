@@ -64,21 +64,21 @@ detection.dispose();
 
 ### Connection Management
 
-Use the ConnectionManager to manage the lifecycle of connections to a peripheral and supply a fresh GattIO to the GattManager on every connection.
+Use the ConnectionManager to manage the lifecycle of connections to a peripheral and supply a fresh Peripheral to the PeripheralManager on every connection.
 
 ```java
 ScanMatcher scanMatcher;
 ConnectionManager connectionManager;
-GattManager gattManager;
+PeripheralManager peripheralManager;
 Disposable connection
 
 // Connect to a peripheral.  
 connection = connectionManager
     .connect(scanMatcher, DEFAULT_SCAN_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT)
     .subscribe(
-        gattIO -> {
-          // Inject the latest connected GattIO into your GattManager.
-          gattManager.setGattIO(gattIO);
+        peripheral -> {
+          // Inject the latest connected Periphearl into your PeripheralManager.
+          peripheralManager.setPeripheral(peripheral);
         },
         error -> {
           // Connection lost.
@@ -92,17 +92,17 @@ Dispose of your subscription to disconnect.
 connection.dispose();
 ```
 
-### GATT Management
+### Peripheral Management
 
-After injecting the latest connected GattIO into your GattManager, you can then queue operations and the GattManager will ensure these are executed in a serial FIFO fashion.  The GattManager is thread safe, so multiple consuming threads can queue operations and they will be reliably executed in the order they are subscribed.
+After injecting the connected Peripheral into your PeripheralManager, you can then queue operations and the PeripheralManager will ensure these are executed in a serial FIFO fashion.  The PeripheralManager is thread safe, so multiple consuming threads can queue operations and they will be reliably executed in the order they are subscribed.
 
 ```java 
-GattManager gattManager;
+PeripheralManager peripheralManager;
 Write write;
 Disposable queued;
 
 // Queue a write operaiton.
-queued = gattManager
+queued = peripheralManager
   .queueOperation(write))
   .subscribe(
        irrelevant -> {

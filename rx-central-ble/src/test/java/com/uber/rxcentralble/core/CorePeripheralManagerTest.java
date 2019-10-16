@@ -16,8 +16,8 @@
 package com.uber.rxcentralble.core;
 
 import com.jakewharton.rxrelay2.PublishRelay;
-import com.uber.rxcentralble.GattIO;
-import com.uber.rxcentralble.GattOperation;
+import com.uber.rxcentralble.Peripheral;
+import com.uber.rxcentralble.PeripheralOperation;
 import com.uber.rxcentralble.Irrelevant;
 
 import org.junit.Before;
@@ -36,14 +36,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class CoreGattManagerTest {
+public class CorePeripheralManagerTest {
 
   @Mock
-  GattIO gattIO;
-  @Mock GattOperation<Irrelevant> gattOperation1;
-  @Mock GattOperation<Irrelevant> gattOperation2;
-  @Mock GattOperation<Irrelevant> gattOperation3;
-  @Mock GattOperation<Irrelevant> gattOperation4;
+  Peripheral peripheral;
+  @Mock
+  PeripheralOperation<Irrelevant> peripheralOperation1;
+  @Mock
+  PeripheralOperation<Irrelevant> peripheralOperation2;
+  @Mock
+  PeripheralOperation<Irrelevant> peripheralOperation3;
+  @Mock
+  PeripheralOperation<Irrelevant> peripheralOperation4;
 
   private final UUID chrUuid = UUID.randomUUID();
   private final SingleSubject<Irrelevant> operationResultSubject1 = SingleSubject.create();
@@ -53,61 +57,61 @@ public class CoreGattManagerTest {
   private final PublishRelay<Boolean> connectedRelay = PublishRelay.create();
   private final PublishRelay<byte[]> notificationRelay = PublishRelay.create();
 
-  private CoreGattManager coreGattManager;
+  private CorePeripheralManager corePeripheralManager;
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    coreGattManager = new CoreGattManager();
-    coreGattManager.setGattIO(gattIO);
+    corePeripheralManager = new CorePeripheralManager();
+    corePeripheralManager.setPeripheral(peripheral);
   }
 
   @Test
   public void queueOperations() {
-    when(gattOperation1.result()).thenReturn(operationResultSubject1.hide());
-    when(gattOperation2.result()).thenReturn(operationResultSubject2.hide());
-    when(gattOperation3.result()).thenReturn(operationResultSubject3.hide());
-    when(gattOperation4.result()).thenReturn(operationResultSubject4.hide());
+    when(peripheralOperation1.result()).thenReturn(operationResultSubject1.hide());
+    when(peripheralOperation2.result()).thenReturn(operationResultSubject2.hide());
+    when(peripheralOperation3.result()).thenReturn(operationResultSubject3.hide());
+    when(peripheralOperation4.result()).thenReturn(operationResultSubject4.hide());
 
-    Single<Irrelevant> op1 = coreGattManager.queueOperation(gattOperation1);
-    verify(gattOperation1, times(0)).execute(any());
+    Single<Irrelevant> op1 = corePeripheralManager.queueOperation(peripheralOperation1);
+    verify(peripheralOperation1, times(0)).execute(any());
 
-    Single<Irrelevant> op2 = coreGattManager.queueOperation(gattOperation2);
-    verify(gattOperation2, times(0)).execute(any());
+    Single<Irrelevant> op2 = corePeripheralManager.queueOperation(peripheralOperation2);
+    verify(peripheralOperation2, times(0)).execute(any());
 
-    Single<Irrelevant> op3 = coreGattManager.queueOperation(gattOperation3);
-    verify(gattOperation3, times(0)).execute(any());
+    Single<Irrelevant> op3 = corePeripheralManager.queueOperation(peripheralOperation3);
+    verify(peripheralOperation3, times(0)).execute(any());
 
     op1.test();
     op2.test();
     TestObserver op3Observer = op3.test();
 
-    verify(gattOperation1).execute(any());
-    verify(gattOperation2, times(0)).execute(any());
+    verify(peripheralOperation1).execute(any());
+    verify(peripheralOperation2, times(0)).execute(any());
 
     // Subscriber for Operation 3 decides they want to cancel the operation.
     op3Observer.dispose();
 
     operationResultSubject1.onSuccess(Irrelevant.INSTANCE);
-    verify(gattOperation2).execute(any());
+    verify(peripheralOperation2).execute(any());
 
-    Single<Irrelevant> op4 = coreGattManager.queueOperation(gattOperation4);
+    Single<Irrelevant> op4 = corePeripheralManager.queueOperation(peripheralOperation4);
     op4.test();
-    verify(gattOperation4, times(0)).execute(any());
+    verify(peripheralOperation4, times(0)).execute(any());
 
     operationResultSubject2.onError(new Exception());
-    verify(gattOperation4).execute(any());
+    verify(peripheralOperation4).execute(any());
 
     // Operation 3 should never have executed.
-    verify(gattOperation3, times(0)).execute(any());
+    verify(peripheralOperation3, times(0)).execute(any());
   }
 
   @Test
   public void noitifcation() {
-    when(gattIO.notification(any())).thenReturn(notificationRelay.hide());
+    when(peripheral.notification(any())).thenReturn(notificationRelay.hide());
 
-    TestObserver<byte[]> notificationTestObserver = coreGattManager.notification(chrUuid).test();
+    TestObserver<byte[]> notificationTestObserver = corePeripheralManager.notification(chrUuid).test();
 
     byte[] notification = new byte[] {0x00};
     notificationRelay.accept(notification);
@@ -117,9 +121,9 @@ public class CoreGattManagerTest {
 
   @Test
   public void connected() {
-    when(gattIO.connected()).thenReturn(connectedRelay.hide());
+    when(peripheral.connected()).thenReturn(connectedRelay.hide());
 
-    TestObserver<Boolean> connectedTestObserver = coreGattManager.connected().test();
+    TestObserver<Boolean> connectedTestObserver = corePeripheralManager.connected().test();
 
     connectedRelay.accept(true);
 

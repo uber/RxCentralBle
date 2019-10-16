@@ -24,7 +24,7 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.uber.rxcentralble.BluetoothDetector;
 import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.ConnectionManager;
-import com.uber.rxcentralble.GattIO;
+import com.uber.rxcentralble.Peripheral;
 import com.uber.rxcentralble.ScanData;
 import com.uber.rxcentralble.ScanMatcher;
 import com.uber.rxcentralble.Scanner;
@@ -46,12 +46,12 @@ public class CoreConnectionManager implements ConnectionManager {
   private final Context context;
   private final BluetoothDetector bluetoothDetector;
   private final Scanner scanner;
-  private final GattIO.Factory gattIOFactory;
+  private final Peripheral.Factory peripheralFactory;
 
   @Nullable
   private ScanMatcher scanMatcher;
   @Nullable
-  protected Observable<GattIO> sharedGattIOObservable;
+  protected Observable<Peripheral> sharedPeripheralObservable;
 
   private int scanTimeoutMs = DEFAULT_SCAN_TIMEOUT;
   private int connectionTimeoutMs = DEFAULT_CONNECTION_TIMEOUT;
@@ -61,49 +61,51 @@ public class CoreConnectionManager implements ConnectionManager {
   }
 
   public CoreConnectionManager(Context context, BluetoothDetector bluetoothDetector) {
-    this(context, bluetoothDetector, new CoreGattIO.Factory());
+    this(context, bluetoothDetector, new CorePeripheral.Factory());
   }
 
-  public CoreConnectionManager(Context context, BluetoothDetector bluetoothDetector, GattIO.Factory gattIOFactory) {
-    this(context, bluetoothDetector, gattIOFactory, new CoreScannerFactory());
+  public CoreConnectionManager(Context context,
+                               BluetoothDetector bluetoothDetector,
+                               Peripheral.Factory peripheralFactory) {
+    this(context, bluetoothDetector, peripheralFactory, new CoreScannerFactory());
   }
 
   public CoreConnectionManager(
           Context context,
           BluetoothDetector bluetoothDetector,
-          GattIO.Factory gattIOFactory,
+          Peripheral.Factory peripheralFactory,
           Scanner.Factory scannerFactory) {
     this.scanner = scannerFactory.produce();
     this.context = context;
     this.bluetoothDetector = bluetoothDetector;
-    this.gattIOFactory = gattIOFactory;
+    this.peripheralFactory = peripheralFactory;
   }
 
   public CoreConnectionManager(
           Context context,
           BluetoothDetector bluetoothDetector,
           Scanner scanner,
-          GattIO.Factory gattIOFactory) {
+          Peripheral.Factory peripheralFactory) {
 
     this.context = context;
     this.bluetoothDetector = bluetoothDetector;
-    this.gattIOFactory = gattIOFactory;
+    this.peripheralFactory = peripheralFactory;
     this.scanner = scanner;
   }
 
   @Override
-  public Observable<GattIO> connect(
+  public Observable<Peripheral> connect(
           ScanMatcher scanMatcher, int scanTimeoutMs, int connectionTimeoutMs) {
     if (this.scanMatcher != null && !this.scanMatcher.equals(scanMatcher)) {
       return Observable.error(new ConnectionError(CONNECTION_IN_PROGRESS));
-    } else if (sharedGattIOObservable != null) {
-      return sharedGattIOObservable;
+    } else if (sharedPeripheralObservable != null) {
+      return sharedPeripheralObservable;
     }
 
     this.scanTimeoutMs = scanTimeoutMs;
     this.connectionTimeoutMs = connectionTimeoutMs;
     this.scanMatcher = scanMatcher;
-    this.sharedGattIOObservable = bluetoothDetector
+    this.sharedPeripheralObservable = bluetoothDetector
             .enabled()
             .distinctUntilChanged()
             .filter(enabled -> enabled)
@@ -111,24 +113,24 @@ public class CoreConnectionManager implements ConnectionManager {
             .switchMap(scanData -> connect(scanData.getBluetoothDevice()))
             .compose(shareConnection());
 
-    return sharedGattIOObservable;
+    return sharedPeripheralObservable;
   }
 
   @Override
-  public Observable<GattIO> connect(BluetoothDevice bluetoothDevice, int connectionTimeoutMs) {
-    if (sharedGattIOObservable != null) {
-      return sharedGattIOObservable;
+  public Observable<Peripheral> connect(BluetoothDevice bluetoothDevice, int connectionTimeoutMs) {
+    if (sharedPeripheralObservable != null) {
+      return sharedPeripheralObservable;
     }
 
     this.connectionTimeoutMs = connectionTimeoutMs;
-    this.sharedGattIOObservable = bluetoothDetector
+    this.sharedPeripheralObservable = bluetoothDetector
             .enabled()
             .distinctUntilChanged()
             .filter(enabled -> enabled)
             .switchMap(enabled -> connect(bluetoothDevice))
             .compose(shareConnection());
 
-    return sharedGattIOObservable;
+    return sharedPeripheralObservable;
   }
 
   @Override
@@ -139,7 +141,7 @@ public class CoreConnectionManager implements ConnectionManager {
   private ObservableTransformer<Boolean, ScanData> scan(Scanner scanner, ScanMatcher scanMatcher) {
     return bluetoothEnabled ->
             bluetoothEnabled
-                    .doOnNext(connectableGattIO -> stateRelay.accept(State.SCANNING))
+                    .doOnNext(enabled -> stateRelay.accept(State.SCANNING))
                     .switchMap(enabled -> scanner.scan())
                     .compose(scanMatcher.match())
                     .firstOrError()
@@ -150,20 +152,20 @@ public class CoreConnectionManager implements ConnectionManager {
                     .toObservable();
   }
 
-  private Observable<GattIO> connect(BluetoothDevice bluetoothDevice) {
+  private Observable<Peripheral> connect(BluetoothDevice bluetoothDevice) {
     stateRelay.accept(State.CONNECTING);
 
-    GattIO gattIO = gattIOFactory.produce(bluetoothDevice, context);
+    Peripheral peripheral = peripheralFactory.produce(bluetoothDevice, context);
 
-    Observable<Pair<GattIO.ConnectableState, GattIO>> gattIoConnection =
-            gattIO
+    Observable<Pair<Peripheral.ConnectableState, Peripheral>> peripheralConnection =
+            peripheral
                     .connect()
-                    .withLatestFrom(Observable.just(gattIO), Pair::new);
+                    .withLatestFrom(Observable.just(peripheral), Pair::new);
 
-    Observable<GattIO.ConnectableState> gattIoConnectionTimeout =
-            gattIO
+    Observable<Peripheral.ConnectableState> peripheralConnectionTimeout =
+            peripheral
                     .connect()
-                    .filter(s -> s == GattIO.ConnectableState.CONNECTED)
+                    .filter(s -> s == Peripheral.ConnectableState.CONNECTED)
                     .firstOrError()
                     .timeout(
                             connectionTimeoutMs,
@@ -171,22 +173,21 @@ public class CoreConnectionManager implements ConnectionManager {
                             Single.error(new ConnectionError(CONNECT_TIMEOUT)))
                     .toObservable();
 
-    return Observable.combineLatest(gattIoConnection, gattIoConnectionTimeout,
+    return Observable.combineLatest(peripheralConnection, peripheralConnectionTimeout,
         (connection, timeout) -> connection)
-            .filter(stateGattPair -> stateGattPair.first == GattIO.ConnectableState.CONNECTED)
-            .map(statePair -> statePair.second);
+            .filter(statePeripheraltPair -> statePeripheraltPair.first == Peripheral.ConnectableState.CONNECTED)
+            .map(statePeripheraltPair -> statePeripheraltPair.second);
   }
 
-  private ObservableTransformer<GattIO, GattIO> shareConnection() {
-    return gattIO -> gattIO
-            .doOnNext(connectableGattIO -> stateRelay.accept(State.CONNECTED))
+  private ObservableTransformer<Peripheral, Peripheral> shareConnection() {
+    return peripheral -> peripheral
+            .doOnNext(connectablePeripheral -> stateRelay.accept(State.CONNECTED))
             .doOnDispose(() -> stateRelay.accept(State.DISCONNECTED))
             .doOnError(error -> stateRelay.accept(State.DISCONNECTED_WITH_ERROR))
             .doFinally(() -> {
-              this.sharedGattIOObservable = null;
+              this.sharedPeripheralObservable = null;
               this.scanMatcher = null;
             })
-            .map(connectableGattIO -> connectableGattIO)
             .replay(1)
             .refCount();
   }

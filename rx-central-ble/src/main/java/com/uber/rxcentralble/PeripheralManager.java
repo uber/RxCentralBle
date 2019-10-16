@@ -22,22 +22,21 @@ import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.annotations.SchedulerSupport;
 
-/** Manages communication with the GATT interface exposed by a peripheral. */
-public interface GattManager {
+/** Manages communication with a connected Peripheral. */
+public interface PeripheralManager {
 
   /**
-   * Set the underlying GattIO interface the GattManager will communicate with. May be set multiple
+   * Set the underlying Peripheral interface the PeripheralManager will communicate with. May be set multiple
    * times as connection cycles occur.
    *
-   * <p>Triggers execution of queued operations the first time the GattIO is set.
+   * <p>Triggers execution of queued operations the first time the Peripheral is set.
    *
-   * @param gattIO the GattIO interface used to communicate with the peripheral.
+   * @param peripheral the Peripheral interface used to communicate with the peripheral.
    */
-  void setGattIO(GattIO gattIO);
+  void setPeripheral(Peripheral peripheral);
 
   /**
-   * Queue a GATT operation to execute against the peripheral represented by the latest GattIO
-   * supplied to the GattManager.
+   * Queue a GATT operation to execute against the Peripheral supplied to the PeripheralManager.
    *
    * <p>Operations will be executed in a serial fashion in the order they are subscribed to; the
    * operation will not execute nor be queued without an active subscription to the Observable
@@ -56,22 +55,22 @@ public interface GattManager {
    *   <dd>{@code queueOperation} does not operate by default on a particular {@link Scheduler}.
    * </dl>
    *
-   * @param gattOperation the operation to queue and execute.
+   * @param peripheralOperation the operation to queue and execute.
    * @param <T> the type of object returned by a successfully executed operation.
-   * @return Single result of the operation; subscribe to queue and execute the GattOperation.
+   * @return Single result of the operation; subscribe to queue and execute the PeripheralOperation.
    */
   @SchedulerSupport(SchedulerSupport.NONE)
-  <T> Single<T> queueOperation(GattOperation<T> gattOperation);
+  <T> Single<T> queueOperation(PeripheralOperation<T> peripheralOperation);
 
   /**
    * Observable stream of connection state.
    *
-   * @return emits true if the GattManager is connected to a peripheral, else false.
+   * @return emits true if the PeripheralManager is connected to a peripheral, else false.
    */
   Observable<Boolean> connected();
 
   /**
-   * Observe characteristic notifications from the underlying GattIO.
+   * Observe characteristic notifications from the underlying Peripheral.
    *
    * <p>Subscriptions to Observables returned by this method remain active across connection cycles;
    * there is no need to re-subscribe to notifications upon reconnection.

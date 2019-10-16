@@ -19,8 +19,8 @@ import android.support.annotation.Nullable;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;
-import com.uber.rxcentralble.GattIO;
-import com.uber.rxcentralble.GattOperation;
+import com.uber.rxcentralble.Peripheral;
+import com.uber.rxcentralble.PeripheralOperation;
 import com.uber.rxcentralble.Irrelevant;
 import com.uber.rxcentralble.Optional;
 
@@ -30,9 +30,9 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.Single;
 
 /** Register for characteristic notifications. */
-public class RegisterNotification implements GattOperation<Irrelevant> {
+public class RegisterNotification implements PeripheralOperation<Irrelevant> {
 
-  private final Relay<Optional<GattIO>> gattRelay = BehaviorRelay.createDefault(Optional.empty());
+  private final Relay<Optional<Peripheral>> peripheralRelay = BehaviorRelay.createDefault(Optional.empty());
   private final Single<Irrelevant> resultSingle;
 
   public RegisterNotification(UUID svc, UUID chr, int timeoutMs) {
@@ -40,16 +40,15 @@ public class RegisterNotification implements GattOperation<Irrelevant> {
   }
 
   public RegisterNotification(
-      UUID svc, UUID chr, @Nullable GattIO.Preprocessor preprocessor, int timeoutMs) {
+          UUID svc, UUID chr, @Nullable Peripheral.Preprocessor preprocessor, int timeoutMs) {
     resultSingle =
-        gattRelay
+        peripheralRelay
             .filter(Optional::isPresent)
             .map(Optional::get)
             .firstOrError()
-            .doOnSuccess(g -> gattRelay.accept(Optional.empty()))
+            .doOnSuccess(g -> peripheralRelay.accept(Optional.empty()))
             .flatMap(
-                gattIO ->
-                    gattIO
+                peripheral -> peripheral
                         .registerNotification(svc, chr, preprocessor)
                         .andThen(Single.just(Irrelevant.INSTANCE)))
             .toObservable()
@@ -64,13 +63,13 @@ public class RegisterNotification implements GattOperation<Irrelevant> {
   }
 
   @Override
-  public void execute(GattIO gattIO) {
-    gattRelay.accept(Optional.of(gattIO));
+  public void execute(Peripheral peripheral) {
+    peripheralRelay.accept(Optional.of(peripheral));
   }
 
   @Override
-  public Single<Irrelevant> executeWithResult(GattIO gattIO) {
+  public Single<Irrelevant> executeWithResult(Peripheral peripheral) {
     return resultSingle
-            .doOnSubscribe(disposable -> execute(gattIO));
+            .doOnSubscribe(disposable -> execute(peripheral));
   }
 }

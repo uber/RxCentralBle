@@ -17,8 +17,8 @@ package com.uber.rxcentralble.core.operations;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;
-import com.uber.rxcentralble.GattIO;
-import com.uber.rxcentralble.GattOperation;
+import com.uber.rxcentralble.Peripheral;
+import com.uber.rxcentralble.PeripheralOperation;
 import com.uber.rxcentralble.Optional;
 
 import java.util.UUID;
@@ -27,19 +27,19 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.Single;
 
 /** Read data from a Gatt characteristic. */
-public class Read implements GattOperation<byte[]> {
+public class Read implements PeripheralOperation<byte[]> {
 
-  private final Relay<Optional<GattIO>> gattRelay = BehaviorRelay.createDefault(Optional.empty());
+  private final Relay<Optional<Peripheral>> peripheralRelay = BehaviorRelay.createDefault(Optional.empty());
   private final Single<byte[]> resultSingle;
 
   public Read(UUID svc, UUID chr, int timeoutMs) {
     resultSingle =
-        gattRelay
+        peripheralRelay
             .filter(Optional::isPresent)
             .map(Optional::get)
             .firstOrError()
-            .doOnSuccess(g -> gattRelay.accept(Optional.empty()))
-            .flatMap(gattIO -> gattIO.read(svc, chr))
+            .doOnSuccess(g -> peripheralRelay.accept(Optional.empty()))
+            .flatMap(peripheral -> peripheral.read(svc, chr))
             .toObservable()
             .share()
             .firstOrError()
@@ -52,13 +52,13 @@ public class Read implements GattOperation<byte[]> {
   }
 
   @Override
-  public void execute(GattIO gattIO) {
-    gattRelay.accept(Optional.of(gattIO));
+  public void execute(Peripheral peripheral) {
+    peripheralRelay.accept(Optional.of(peripheral));
   }
 
   @Override
-  public Single<byte[]> executeWithResult(GattIO gattIO) {
+  public Single<byte[]> executeWithResult(Peripheral peripheral) {
     return resultSingle
-            .doOnSubscribe(disposable -> execute(gattIO));
+            .doOnSubscribe(disposable -> execute(peripheral));
   }
 }
