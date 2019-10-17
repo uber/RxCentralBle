@@ -24,6 +24,7 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
+import com.jakewharton.rxrelay2.PublishRelay;
 import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.RxCentralLogger;
 import com.uber.rxcentralble.ScanData;
@@ -42,14 +43,21 @@ import java.util.concurrent.TimeUnit;
 import android.support.annotation.Nullable;
 
 import io.reactivex.Observable;
-import io.reactivex.subjects.PublishSubject;
+import io.reactivex.Scheduler;
+import io.reactivex.subjects.CompletableSubject;
 
 import static android.bluetooth.le.ScanSettings.SCAN_MODE_OPPORTUNISTIC;
 import static com.uber.rxcentralble.ConnectionError.Code.SCAN_FAILED;
 
-/** Core Scanner implementation for API >= 21 (i.e. Lollipop). */
+/**
+ * Core Scanner implementation for API >= 21 (i.e. Lollipop).  This implementation is thread safe.
+ */
 @TargetApi(21)
 public class ThrottledLollipopScanner implements Scanner {
+
+  public static final long ANDROID_7_MAX_SCAN_DURATION_MS = 29 * 60 * 1000; // 29 minutes
+  public static final long PAUSE_INTERVAL_MS = 10 * 1000; // 10 seconds
+  public static final long SCAN_WINDOW_MS = 30 * 1000; // 30 seconds
 
   private final ParsedAdvertisement.Factory parsedAdDataFactory;
   private final ScanCallback scanCallback;
@@ -58,13 +66,12 @@ public class ThrottledLollipopScanner implements Scanner {
   private final long pauseIntervalMs;
   private final Queue<Long> scanTimestamps = new ArrayDeque<>(5);
   private final BehaviorRelay<Integer> scanModeRelay = BehaviorRelay.createDefault(SCAN_MODE_OPPORTUNISTIC);
+  private final PublishRelay<ScanData> scanDataRelay = PublishRelay.create();
+  private final Observable<ScanData> sharedScanData;
 
-  @Nullable private PublishSubject<ScanData> scanDataSubject;
-  @Nullable private Observable<ScanData> sharedScanData;
+  private final Object syncRoot = new Object();
 
-  public static final long ANDROID_7_MAX_SCAN_DURATION_MS = 29 * 60 * 1000; // 29 minutes
-  public static final long PAUSE_INTERVAL_MS = 10 * 1000; // 10 seconds
-  public static final long SCAN_WINDOW_MS = 30 * 1000; // 30 seconds
+  private CompletableSubject errorSubject;
 
   public ThrottledLollipopScanner() {
     this(new CoreParsedAdvertisement.Factory(), ANDROID_7_MAX_SCAN_DURATION_MS, PAUSE_INTERVAL_MS);
@@ -77,6 +84,20 @@ public class ThrottledLollipopScanner implements Scanner {
     this.scanCallback = getScanCallback();
     this.maxScanDurationMs = maxScanDurationMs;
     this.pauseIntervalMs = pauseIntervalMs;
+
+    this.errorSubject = CompletableSubject.create();
+    this.sharedScanData = scanModeRelay
+            .switchMap(nextScanMode -> Observable.fromCallable(this::calculateDelay)
+                    .switchMap(delay -> Observable.timer(delay, TimeUnit.MILLISECONDS))
+                    .map(proceed -> nextScanMode))
+            .distinctUntilChanged()
+            .switchMap(nextScanMode -> Observable.concat(
+                    // Start a (potentially delayed) throttled scan.
+                    throttledScan(scanDataRelay, nextScanMode),
+                    // Repeat pause followed by throttle scan.
+                    intervalScan(scanDataRelay, nextScanMode)))
+            .doFinally(this::cleanup)
+            .share();
   }
 
   @Override
@@ -88,27 +109,7 @@ public class ThrottledLollipopScanner implements Scanner {
   public Observable<ScanData> scan(final int scanMode) {
     final long timestamp = System.currentTimeMillis();
 
-    if (sharedScanData == null) {
-      this.scanDataSubject = PublishSubject.create();
-      // Android 7 disallows cycling scanning more than 5 times in a 30 second window.
-      // Work around this by delaying the start of the next scan based on the last time we stopped.
-      // Without this workaround, you may see logs in logcat such as
-      // "E/BtGatt.GattService: App 'com.your.app' is scanning too frequently"
-      this.sharedScanData = scanModeRelay
-              .switchMap(nextScanMode -> Observable.fromCallable(this::calculateDelay)
-                      .switchMap(delay -> Observable.timer(delay, TimeUnit.MILLISECONDS))
-                      .map(proceed -> nextScanMode))
-              .distinctUntilChanged()
-              .switchMap(nextScanMode -> Observable.concat(
-                      // Start a (potentially delayed) throttled scan.
-                      throttledScan(scanDataSubject, nextScanMode),
-                      // Repeat pause followed by throttle scan.
-                      intervalScan(scanDataSubject, nextScanMode)))
-              .doFinally(this::cleanup)
-              .share();
-    }
-
-    return sharedScanData
+    return Observable.merge(sharedScanData, getErrorSubject().toObservable())
             .doOnSubscribe(d -> checkForFasterScanMode(timestamp, scanMode))
             .doFinally(() -> checkForSlowerScanMode(timestamp));
   }
@@ -135,11 +136,6 @@ public class ThrottledLollipopScanner implements Scanner {
   }
 
   private void startScan(int scanMode) {
-    // Don't do anything if nobody can listen.
-    if (scanDataSubject == null) {
-      return;
-    }
-
     BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
     if (adapter != null && adapter.isEnabled()) {
       // Add a dummy filter to avoid Android 8.1+ enforcement of filters during background isScanning.
@@ -158,7 +154,7 @@ public class ThrottledLollipopScanner implements Scanner {
           RxCentralLogger.error("startScan - BluetoothLeScanner is null!");
         }
 
-        scanDataSubject.onError(new ConnectionError(SCAN_FAILED));
+        getErrorSubject().onError(new ConnectionError(SCAN_FAILED));
       }
     } else {
       if (RxCentralLogger.isError()) {
@@ -169,7 +165,7 @@ public class ThrottledLollipopScanner implements Scanner {
         }
       }
 
-      scanDataSubject.onError(new ConnectionError(SCAN_FAILED));
+      getErrorSubject().onError(new ConnectionError(SCAN_FAILED));
     }
   }
 
@@ -209,9 +205,17 @@ public class ThrottledLollipopScanner implements Scanner {
     }
   }
 
+  private CompletableSubject getErrorSubject() {
+    synchronized (syncRoot) {
+      if (errorSubject.hasThrowable()) {
+        errorSubject = CompletableSubject.create();
+      }
+
+      return errorSubject;
+    }
+  }
+
   private void cleanup() {
-    sharedScanData = null;
-    scanDataSubject = null;
     scanModeRelay.accept(SCAN_MODE_OPPORTUNISTIC);
     scanModeMap.clear();
   }
@@ -258,9 +262,7 @@ public class ThrottledLollipopScanner implements Scanner {
           RxCentralLogger.error("onScanFailed - Error Code: "  + errorCode);
         }
 
-        if (scanDataSubject != null) {
-          scanDataSubject.onError(new ConnectionError(SCAN_FAILED));
-        }
+        getErrorSubject().onError(new ConnectionError(SCAN_FAILED));
       }
 
       @Override
@@ -276,15 +278,13 @@ public class ThrottledLollipopScanner implements Scanner {
       }
 
       private void handleScanData(ScanResult scanResult) {
-        if (scanDataSubject != null) {
-          ParsedAdvertisement parsedAdvertisement = null;
-          if (scanResult.getScanRecord() != null) {
-            parsedAdvertisement = parsedAdDataFactory.produce(scanResult.getScanRecord().getBytes());
-          }
-
-          ScanData scanData = new LollipopScanData(scanResult, parsedAdvertisement);
-          scanDataSubject.onNext(scanData);
+        ParsedAdvertisement parsedAdvertisement = null;
+        if (scanResult.getScanRecord() != null) {
+          parsedAdvertisement = parsedAdDataFactory.produce(scanResult.getScanRecord().getBytes());
         }
+
+        ScanData scanData = new LollipopScanData(scanResult, parsedAdvertisement);
+        scanDataRelay.accept(scanData);
       }
     };
   }

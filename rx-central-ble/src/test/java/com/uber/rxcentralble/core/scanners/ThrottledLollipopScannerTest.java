@@ -235,18 +235,18 @@ public class ThrottledLollipopScannerTest {
 
     scanDataTestObserver = scanner.scan(ScanSettings.SCAN_MODE_BALANCED).test();
 
-    testScheduler.advanceTimeBy(SCAN_WINDOW_MS / 5, TimeUnit.MILLISECONDS);
+    testScheduler.advanceTimeBy(SCAN_WINDOW_MS / 5 + 1, TimeUnit.MILLISECONDS);
 
     // Each time latency changes, we stop / start scanning.
     TestObserver<ScanData> fastScanMode = scanner.scan(ScanSettings.SCAN_MODE_LOW_LATENCY).test();
-    testScheduler.advanceTimeBy(SCAN_WINDOW_MS / 5, TimeUnit.MILLISECONDS);
+    testScheduler.advanceTimeBy(SCAN_WINDOW_MS / 5 + 1, TimeUnit.MILLISECONDS);
     // Disposing this subscription will result in stop / start scanning back to BALANCED scan mode.
     fastScanMode.dispose();
 
-    testScheduler.advanceTimeBy(SCAN_WINDOW_MS / 5, TimeUnit.MILLISECONDS);
+    testScheduler.advanceTimeBy(SCAN_WINDOW_MS / 5 + 1, TimeUnit.MILLISECONDS);
 
     fastScanMode = scanner.scan(ScanSettings.SCAN_MODE_LOW_LATENCY).test();
-    testScheduler.advanceTimeBy(SCAN_WINDOW_MS / 5, TimeUnit.MILLISECONDS);
+    testScheduler.advanceTimeBy(SCAN_WINDOW_MS / 5 + 1, TimeUnit.MILLISECONDS);
     fastScanMode.dispose();
 
     verify(bluetoothLeScanner, times(2))
