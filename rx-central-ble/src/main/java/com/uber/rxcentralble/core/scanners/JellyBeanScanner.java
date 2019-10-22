@@ -17,7 +17,6 @@ package com.uber.rxcentralble.core.scanners;
 
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
-import android.support.annotation.Nullable;
 
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.uber.rxcentralble.ParsedAdvertisement;
@@ -29,7 +28,6 @@ import com.uber.rxcentralble.core.CoreParsedAdvertisement;
 
 import io.reactivex.Observable;
 import io.reactivex.subjects.CompletableSubject;
-import io.reactivex.subjects.PublishSubject;
 
 import static com.uber.rxcentralble.ConnectionError.Code.SCAN_FAILED;
 

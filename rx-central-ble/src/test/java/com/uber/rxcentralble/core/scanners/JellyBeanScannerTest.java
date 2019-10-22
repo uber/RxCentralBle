@@ -35,7 +35,6 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
 
 import io.reactivex.observers.TestObserver;
-import io.reactivex.schedulers.TestScheduler;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;

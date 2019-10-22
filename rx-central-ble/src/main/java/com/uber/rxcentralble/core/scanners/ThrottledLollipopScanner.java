@@ -40,10 +40,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
-import android.support.annotation.Nullable;
-
 import io.reactivex.Observable;
-import io.reactivex.Scheduler;
 import io.reactivex.subjects.CompletableSubject;
 
 import static android.bluetooth.le.ScanSettings.SCAN_MODE_OPPORTUNISTIC;
