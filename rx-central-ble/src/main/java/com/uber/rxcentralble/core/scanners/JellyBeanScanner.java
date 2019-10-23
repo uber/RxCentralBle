@@ -17,8 +17,8 @@ package com.uber.rxcentralble.core.scanners;
 
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
-import android.support.annotation.Nullable;
 
+import com.jakewharton.rxrelay2.PublishRelay;
 import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.RxCentralLogger;
 import com.uber.rxcentralble.ScanData;
@@ -27,19 +27,24 @@ import com.uber.rxcentralble.Scanner;
 import com.uber.rxcentralble.core.CoreParsedAdvertisement;
 
 import io.reactivex.Observable;
-import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.CompletableSubject;
 
 import static com.uber.rxcentralble.ConnectionError.Code.SCAN_FAILED;
 
-/** Core Scanner implementation for API < 21 (i.e. JellyBean) */
+/**
+ * Core Scanner implementation for API < 21 (i.e. JellyBean).  This implementation is thread safe.
+ */
 @TargetApi(18)
 public class JellyBeanScanner implements Scanner {
 
   private final ParsedAdvertisement.Factory parsedAdDataFactory;
   private final BluetoothAdapter.LeScanCallback leScanCallback;
+  private final PublishRelay<ScanData> scanDataRelay = PublishRelay.create();
+  private final Observable<ScanData> sharedScanData;
 
-  @Nullable private PublishSubject<ScanData> scanDataSubject;
-  @Nullable private Observable<ScanData> sharedScanData;
+  private final Object syncRoot = new Object();
+
+  private CompletableSubject errorSubject;
 
   public JellyBeanScanner() {
     this(new CoreParsedAdvertisement.Factory());
@@ -48,24 +53,17 @@ public class JellyBeanScanner implements Scanner {
   public JellyBeanScanner(ParsedAdvertisement.Factory parsedAdDataFactory) {
     this.parsedAdDataFactory = parsedAdDataFactory;
     this.leScanCallback = getScanCallback();
+
+    this.errorSubject = CompletableSubject.create();
+    this.sharedScanData = scanDataRelay
+            .doOnSubscribe(disposable -> startScan())
+            .doFinally(this::stopScan)
+            .share();
   }
 
   @Override
   public Observable<ScanData> scan() {
-    if (scanDataSubject == null) {
-      this.scanDataSubject = PublishSubject.create();
-      this.sharedScanData = scanDataSubject
-              .doOnSubscribe(
-                  d -> {
-                    if (scanDataSubject != null) {
-                      startScan(scanDataSubject);
-                    }
-                  })
-              .doFinally(this::stopScan)
-              .share();
-    }
-
-    return sharedScanData;
+    return Observable.merge(sharedScanData, getErrorSubject().toObservable());
   }
 
   /**
@@ -79,13 +77,15 @@ public class JellyBeanScanner implements Scanner {
     return scan();
   }
 
-  private void startScan(PublishSubject scanDataSubject) {
+  private void startScan() {
     BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
     if (adapter != null && adapter.isEnabled()) {
       if (!adapter.startLeScan(leScanCallback)) {
-        scanDataSubject.onError(new ConnectionError(SCAN_FAILED));
-      } else if (RxCentralLogger.isError()) {
-        RxCentralLogger.error("startLeScan failed.");
+        getErrorSubject().onError(new ConnectionError(SCAN_FAILED));
+
+        if (RxCentralLogger.isError()) {
+          RxCentralLogger.error("startLeScan failed.");
+        }
       }
     } else {
       if (RxCentralLogger.isError()) {
@@ -96,7 +96,7 @@ public class JellyBeanScanner implements Scanner {
         }
       }
 
-      scanDataSubject.onError(new ConnectionError(SCAN_FAILED));
+      getErrorSubject().onError(new ConnectionError(SCAN_FAILED));
     }
   }
 
@@ -111,9 +111,16 @@ public class JellyBeanScanner implements Scanner {
         RxCentralLogger.error("stopScan - Bluetooth Adapter is disabled.");
       }
     }
+  }
 
-    this.scanDataSubject = null;
-    this.sharedScanData = null;
+  private CompletableSubject getErrorSubject() {
+    synchronized (syncRoot) {
+      if (errorSubject.hasThrowable()) {
+        errorSubject = CompletableSubject.create();
+      }
+
+      return errorSubject;
+    }
   }
 
   /** Implementation of Android LeScanCallback. */
@@ -124,10 +131,8 @@ public class JellyBeanScanner implements Scanner {
                 + " | RSSI: " + rssi);
       }
 
-      if (scanDataSubject != null) {
-        ScanData scanData = new JellyBeanScanData(bluetoothDevice, rssi, parsedAdDataFactory.produce(eirData));
-        scanDataSubject.onNext(scanData);
-      }
+      ScanData scanData = new JellyBeanScanData(bluetoothDevice, rssi, parsedAdDataFactory.produce(eirData));
+      scanDataRelay.accept(scanData);
     };
   }
 }
