@@ -1,4 +1,4 @@
-# RxCentralBle [![Build Status](https://travis-ci.com/uber/RxCentralBle.svg?token=2UrwyXryNMzqEY69Hrhn&branch=master)](https://travis-ci.org/uber/RxCentralBle)
+# RxCentralBle [![Build Status](https://travis-ci.com/uber/RxCentralBle.svg?branch=master)](https://travis-ci.org/uber/RxCentralBle)
 
 RxCentralBle is a reactive, interface-driven library used to integrate with Bluetooth LE peripherals.   
 
