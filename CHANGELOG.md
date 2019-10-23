@@ -49,3 +49,10 @@ Version 1.1.1
 ----------------------------
 
 * Improved Scanning and Connectivity APIs
+
+Version 1.2.0
+----------------------------
+
+* Core Scanners can (and should) be shared across an application scope
+* Core Scanners are now thread safe
+* Deprecated GATT naming convention in favor of Peripheral
