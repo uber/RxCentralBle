@@ -77,7 +77,7 @@ connection = connectionManager
     .connect(scanMatcher, DEFAULT_SCAN_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT)
     .subscribe(
         peripheral -> {
-          // Inject the latest connected Periphearl into your PeripheralManager.
+          // Inject the latest connected Peripheral into your PeripheralManager.
           peripheralManager.setPeripheral(peripheral);
         },
         error -> {
@@ -90,6 +90,28 @@ Dispose of your subscription to disconnect.
 ```java
 // Disconnect.
 connection.dispose();
+```
+
+Because this is a reactive library, you can leverage Rx retries to attempt to reconnect to a peripheral if a scan fails.
+
+```java
+ScanMatcher scanMatcher;
+ConnectionManager connectionManager;
+PeripheralManager peripheralManager;
+Disposable connection
+
+// Support retries for connection. 
+connection = connectionManager
+    .connect(scanMatcher, DEFAULT_SCAN_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT)
+    .retryWhen(
+        errorObservable -> 
+            // Custom retry logic
+    )
+    .subscribe(
+        peripheral -> {
+          // Inject the latest connected peripheral into your PeripheralManager.
+          peripheralManager.setPeripheral(peripheral);
+        };
 ```
 
 ### Peripheral Management
