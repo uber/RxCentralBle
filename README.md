@@ -4,12 +4,15 @@ RxCentralBle is a reactive, interface-driven library used to integrate with Blue
 
 For those tired of writing eerily similar, yet subtly different code for every Bluetooth LE peripheral integration, RxCentralBle provides a standardized, simple reactive paradigm for connecting to and communicating with peripherals from the central role.
 
+RxCentralBle avoids many known Android pitfalls, including more recently discovered limitations in Android 7 & 8 around long running scan operations.
+
 Check out our detailed [Wiki](https://github.com/uber/RxCentralBle/wiki) for designs and examples for all the capabilities of RxCentralBle.
 
 ## Key Features
 
-  - Reactive; observe actions to trigger them, dispose to stop. 
-  - Built-in operation queue; respects the serial nature of Android's BluetoothGatt.
+  - Reactive; subscribe to actions to trigger them, dispose to stop
+  - Built-in operation queue; respects the serial nature of Android's BluetoothGatt
+  - Built-in GATT write segmentation; all writes are automatically chunked into MTU-sized segments
   - Interface-driven; customize the library with your own implementations
   - Manager-based; two managers for all connectivity and communication
 
@@ -17,7 +20,7 @@ Check out our detailed [Wiki](https://github.com/uber/RxCentralBle/wiki) for des
 
 RxCentralBle optimizes for the following use cases:
 
-  - Where the ability to connect to and communicate with a Bluetooth LE peripheral is needed
+  - Where the ability to connect to and communicate with a Bluetooth 4.0 LE peripheral is needed
   - Where the peripheral is Bluetooth 4.0 LE compliant and acts per the specification
   - Where the peripheral does not require Bluetooth 4.0 specified authentication
   - Where the peripheral is not an ultra-low power device
