@@ -8,6 +8,8 @@ RxCentralBle avoids many known Android pitfalls, including more recently discove
 
 Check out our detailed [Wiki](https://github.com/uber/RxCentralBle/wiki) for designs and examples for all the capabilities of RxCentralBle.
 
+NEW! Uber Engineering Blog [article](https://eng.uber.com/rxcentral-bluetooth-connection-library-rxcentralble/) detailing  RxCentral cross-platform design and techniques for Android.
+
 ## Key Features
 
   - Reactive; subscribe to actions to trigger them, dispose to stop
