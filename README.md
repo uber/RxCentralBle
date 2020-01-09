@@ -2,13 +2,13 @@
 
 RxCentralBle is a reactive, interface-driven library used to integrate with Bluetooth LE peripherals.   
 
-For those tired of writing eerily similar, yet subtly different code for every Bluetooth LE peripheral integration, RxCentralBle provides a standardized, simple reactive paradigm for connecting to and communicating with peripherals from the central role.
+For those tired of writing eerily similar, yet subtly different code for every Bluetooth LE peripheral integration, RxCentralBle provides a standardized, simple reactive paradigm for connecting to and communicating with peripherals from the central role.  RxCentralBle avoids many known Android pitfalls, including more recently discovered limitations in Android 7 & 8 around long running scan operations.
 
-RxCentralBle avoids many known Android pitfalls, including more recently discovered limitations in Android 7 & 8 around long running scan operations.
+RxCentralBle powers Uber's Bluetooth LE integrations on Android, including the next-generation Uber Beacon 2.0.
 
 Check out our detailed [Wiki](https://github.com/uber/RxCentralBle/wiki) for designs and examples for all the capabilities of RxCentralBle.
 
-NEW! Uber Engineering Blog [article](https://eng.uber.com/rxcentral-bluetooth-connection-library-rxcentralble/) detailing  RxCentral cross-platform design and techniques for Android.
+NEW! Uber Engineering Blog [article](https://eng.uber.com/rxcentral-bluetooth-connection-library-rxcentralble/) detailing  RxCentral cross-platform design (RxCBCentral for iOS coming soon!) and techniques for Android.
 
 ## Key Features
 
