@@ -1,10 +1,10 @@
 # RxCentralBle [![Build Status](https://travis-ci.com/uber/RxCentralBle.svg?branch=master)](https://travis-ci.org/uber/RxCentralBle)
 
-RxCentralBle is a reactive, interface-driven library used to integrate with Bluetooth LE peripherals.   
+RxCentralBle is a reactive, interface-driven library used to integrate with Bluetooth LE peripherals.  It is ideal for all applications - in particular, it's well suited for applications that require multiple concurrent Bluetooth LE integrations - like Uber's apps.
 
-For those tired of writing eerily similar, yet subtly different code for every Bluetooth LE peripheral integration, RxCentralBle provides a standardized, simple reactive paradigm for connecting to and communicating with peripherals from the central role.  RxCentralBle avoids many known Android pitfalls, including more recently discovered limitations in Android 7 & 8 around long running scan operations.
+RxCentralBle provides a standardized, simple reactive paradigm for connecting to and communicating with peripherals from the central role.  RxCentralBle avoids many known Android pitfalls, including limitations in Android 7 & 8 around scanning operations.
 
-RxCentralBle powers Uber's Bluetooth LE integrations on Android, including the next-generation Uber Beacon 2.0.
+RxCentralBle powers Uber's Bluetooth LE integrations on Android, including the next-generation [Uber Beacon](https://uber.com/beacon).
 
 Check out our detailed [Wiki](https://github.com/uber/RxCentralBle/wiki) for designs and examples for all the capabilities of RxCentralBle.
 
@@ -22,10 +22,9 @@ NEW! Uber Engineering Blog [article](https://eng.uber.com/rxcentral-bluetooth-co
 
 RxCentralBle optimizes for the following use cases:
 
-  - Where the ability to connect to and communicate with a Bluetooth 4.0 LE peripheral is needed
-  - Where the peripheral is Bluetooth 4.0 LE compliant and acts per the specification
+  - Where the ability to connect to and communicate with a Bluetooth 4.0+ LE peripheral is needed
+  - Where the peripheral is Bluetooth 4.0+ LE compliant and acts per the specification
   - Where the peripheral does not require Bluetooth 4.0 specified authentication
-  - Where the peripheral is not an ultra-low power device
 
 ## Download
 
