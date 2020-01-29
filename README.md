@@ -1,4 +1,4 @@
-<p><img src="https://d183q68ssszldn.cloudfront.net/rx_central_logo.png" width="50"/></p>
+<p><img src="https://d183q68ssszldn.cloudfront.net/rx_central_logo.png" width="100"/></p>
 
 # RxCentralBle [![Build Status](https://travis-ci.com/uber/RxCentralBle.svg?branch=master)](https://travis-ci.org/uber/RxCentralBle)
 
