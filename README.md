@@ -1,4 +1,4 @@
-# <img src="https://d183q68ssszldn.cloudfront.net/rx_central_logo.png" width="50"/>RxCentralBle [![Build Status](https://travis-ci.com/uber/RxCentralBle.svg?branch=master)](https://travis-ci.org/uber/RxCentralBle)
+# <img src="https://d183q68ssszldn.cloudfront.net/rx_central_logo.png" width="50"/> RxCentralBle [![Build Status](https://travis-ci.com/uber/RxCentralBle.svg?branch=master)](https://travis-ci.org/uber/RxCentralBle)
 
 RxCentralBle provides a simple reactive paradigm for connecting to and communicating with Bluetooth LE peripherals from the central role. It is ideal for all applications - in particular those that require multiple concurrent Bluetooth LE integrations.
 
