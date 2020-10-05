@@ -8,7 +8,9 @@ RxCentralBle avoids many known Android pitfalls, including limitations in Androi
 
 RxCentralBle powers Uber's Bluetooth LE integrations on Android, including the next-generation [Uber Beacon](https://uber.com/beacon).
 
-NEW! Uber Engineering Blog [article](https://eng.uber.com/rxcentral-bluetooth-connection-library-rxcentralble/) detailing  RxCentral cross-platform design (RxCBCentral for iOS coming soon!) and techniques for Android.
+NEW! Uber Engineering Blog [article](https://eng.uber.com/rxcentral-bluetooth-connection-library-rxcentralble/) detailing RxCentral cross-platform design and techniques for Android.
+
+Check out the equivalent iOS library: [RxCBCentral](https://github.com/uber/RxCBCentral).
 
 ## Key Features
 
