@@ -3,7 +3,7 @@ package com.uber.rxcentralble;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import androidx.annotation.Nullable;
+import android.support.annotation.Nullable;
 
 import java.util.UUID;
 

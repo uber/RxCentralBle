@@ -15,7 +15,7 @@
  */
 package com.uber.rxcentralble;
 
-import androidx.annotation.Nullable;
+import android.support.annotation.Nullable;
 
 /**
  * A ConnectionError is thrown whenever an issue occurs that prevents connection to a peripheral.

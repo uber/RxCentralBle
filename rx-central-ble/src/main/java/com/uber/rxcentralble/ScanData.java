@@ -18,7 +18,7 @@ package com.uber.rxcentralble;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanResult;
-import androidx.annotation.Nullable;
+import android.support.annotation.Nullable;
 
 /** Provides an abstraction layer for accessing details of a peripheral's advertisement data. */
 public interface ScanData {
