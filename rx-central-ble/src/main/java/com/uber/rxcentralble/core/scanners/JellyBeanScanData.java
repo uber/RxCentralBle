@@ -17,7 +17,7 @@ package com.uber.rxcentralble.core.scanners;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanResult;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.ScanData;

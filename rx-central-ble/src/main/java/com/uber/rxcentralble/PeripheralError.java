@@ -15,7 +15,7 @@
  */
 package com.uber.rxcentralble;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 /**
  * A PeripheralError is thrown whenever an issue occurs that prevents function of an operation on {@link

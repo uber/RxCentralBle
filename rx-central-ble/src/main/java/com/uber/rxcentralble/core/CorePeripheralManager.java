@@ -15,7 +15,7 @@
  */
 package com.uber.rxcentralble.core;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.uber.rxcentralble.Peripheral;

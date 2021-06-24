@@ -33,7 +33,7 @@ import com.uber.rxcentralble.core.CoreParsedAdvertisement;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
