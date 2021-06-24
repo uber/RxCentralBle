@@ -1,6 +1,6 @@
 package com.uber.rxcentralble.core;
 
-import androidx.annotation.Nullable;
+import android.support.annotation.Nullable;
 
 import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.Utils;

@@ -24,8 +24,8 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.os.Build;
-import androidx.annotation.Nullable;
-import androidx.core.util.Pair;
+import android.support.annotation.Nullable;
+import android.support.v4.util.Pair;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;

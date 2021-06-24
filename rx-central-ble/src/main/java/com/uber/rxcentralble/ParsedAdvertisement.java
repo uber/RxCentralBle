@@ -1,6 +1,6 @@
 package com.uber.rxcentralble;
 
-import androidx.annotation.Nullable;
+import android.support.annotation.Nullable;
 
 import java.util.UUID;
 
