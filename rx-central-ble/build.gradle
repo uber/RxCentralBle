@@ -48,9 +48,8 @@ task checkstyle(type: Checkstyle) {
 check.dependsOn 'checkstyle'
 
 dependencies {
-    implementation deps.support.appcompat
-    implementation deps.support.v4
     implementation deps.support.annotations
+    implementation deps.support.core
     implementation deps.misc.timber
 
     api deps.rx.java
