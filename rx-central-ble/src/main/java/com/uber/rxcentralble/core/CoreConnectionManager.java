@@ -17,8 +17,8 @@ package com.uber.rxcentralble.core;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.support.annotation.Nullable;
-import android.support.v4.util.Pair;
+import androidx.annotation.Nullable;
+import androidx.core.util.Pair;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.uber.rxcentralble.BluetoothDetector;
