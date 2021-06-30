@@ -56,3 +56,8 @@ Version 1.2.0
 * Core Scanners can (and should) be shared across an application scope
 * Core Scanners are now thread safe
 * Deprecated GATT naming convention in favor of Peripheral
+
+Version 1.2.1
+----------------------------
+
+* Jetify dependencies, migrate to androidx
