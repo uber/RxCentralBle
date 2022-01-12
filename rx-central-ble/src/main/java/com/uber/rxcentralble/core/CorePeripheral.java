@@ -201,6 +201,7 @@ public class CorePeripheral implements Peripheral {
     synchronized (syncRoot) {
       if (bluetoothGatt != null) {
         bluetoothGatt.disconnect();
+        bluetoothGatt.close();
         bluetoothGatt = null;
       }
 

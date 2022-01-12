@@ -147,6 +147,7 @@ public class CorePeripheralTest {
         });
 
     verify(bluetoothGatt).disconnect();
+    verify(bluetoothGatt).close();
   }
 
   @Test
@@ -171,6 +172,7 @@ public class CorePeripheralTest {
         });
 
     verify(bluetoothGatt).disconnect();
+    verify(bluetoothGatt).close();
   }
 
   @Test
@@ -199,6 +201,7 @@ public class CorePeripheralTest {
         });
 
     verify(bluetoothGatt).disconnect();
+    verify(bluetoothGatt).close();
   }
 
   @Test
