@@ -25,17 +25,34 @@
         android:ems="10"
         android:hint="@string/hint_name"
         android:inputType="textPersonName"
+        app:layout_constraintEnd_toStartOf="@id/toggleButtonMacAddress"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ToggleButton
+        android:id="@+id/toggleButtonMacAddress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="ToggleButton"
+        android:textOff="By Name"
+        android:textOn="By Mac"
+        android:visibility="visible"
+        app:layout_constraintEnd_toStartOf="@id/buttonConnect"
+        app:layout_constraintStart_toEndOf="@+id/nameEditText"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/buttonConnect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="17dp"
         android:text="Connect"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/toggleButtonMacAddress"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView

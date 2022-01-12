@@ -2,6 +2,7 @@ package com.uber.rxcentralble.sample;
 
 import android.annotation.SuppressLint;
 import androidx.appcompat.app.AppCompatActivity;
+import android.bluetooth.BluetoothAdapter;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
@@ -16,6 +17,7 @@ import com.uber.rxcentralble.ConnectionError;
 import com.uber.rxcentralble.ConnectionManager;
 import com.uber.rxcentralble.PeripheralManager;
 import com.uber.rxcentralble.Irrelevant;
+import com.uber.rxcentralble.Peripheral;
 import com.uber.rxcentralble.RxCentralLogger;
 import com.uber.rxcentralble.ScanMatcher;
 import com.uber.rxcentralble.Scanner;
@@ -54,6 +56,9 @@ public class MainActivity extends AppCompatActivity {
 
   @BindView(R.id.toggleButtonDirectConnect)
   ToggleButton directConnectToggle;
+
+  @BindView(R.id.toggleButtonMacAddress)
+  ToggleButton nameOrMacToggle;
 
   Disposable bluetoothDetection;
   Disposable connection;
@@ -195,17 +200,43 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
+  @OnCheckedChanged(R.id.toggleButtonDirectConnect)
+  public void directConnect(CompoundButton button, boolean checked) {
+    nameOrMacToggle.setChecked(false);
+    nameOrMacToggle.setEnabled(!checked);
+  }
+
+  @OnCheckedChanged(R.id.toggleButtonMacAddress)
+  public void nameOrMac(CompoundButton button, boolean checked) {
+    nameEditText.setText("");
+    if (checked) {
+      nameEditText.setHint(R.string.hint_mac);
+    } else {
+      nameEditText.setHint(R.string.hint_name);
+    }
+  }
+
   private void connect() {
     if (connection == null) {
-      String name = nameEditText.getEditableText().toString();
-      if (!TextUtils.isEmpty(name)) {
-        Timber.i("Connect to:  " + name);
+      String nameOrMac = nameEditText.getEditableText().toString();
+      if (!TextUtils.isEmpty(nameOrMac)) {
+        Timber.i("Connect to:  " + nameOrMac);
         connectButton.setText("Cancel");
+        nameOrMacToggle.setEnabled(false);
+        directConnectToggle.setEnabled(false);
 
-        connection = connectionManager
-                .connect(new NameScanMatcher(name),
-                        DEFAULT_SCAN_TIMEOUT * 20,
-                        DEFAULT_CONNECTION_TIMEOUT)
+        Observable<Peripheral> pendingConnection;
+        if (nameOrMacToggle.isChecked()) {
+          pendingConnection = connectionManager
+                  .connect(BluetoothAdapter.getDefaultAdapter().getRemoteDevice(nameOrMac),
+                          DEFAULT_CONNECTION_TIMEOUT);
+        } else {
+          pendingConnection = connectionManager
+                  .connect(new NameScanMatcher(nameOrMac),
+                          DEFAULT_SCAN_TIMEOUT * 20,
+                          DEFAULT_CONNECTION_TIMEOUT);
+        }
+        connection = pendingConnection
                 .retryWhen(errors ->
                         errors.flatMap(
                             error -> {
@@ -220,14 +251,18 @@ public class MainActivity extends AppCompatActivity {
                           peripheralManager.setPeripheral(peripheral);
 
                           AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Disconnect"));
-                          Timber.i("Connected to: " + name);
+                          Timber.i("Connected to: " + nameOrMac);
                           Timber.i("Max Write Length (MTU): " + peripheral.getMaxWriteLength());
                         },
                         error -> {
                           connection.dispose();
                           connection = null;
 
-                          AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Connect"));
+                          AndroidSchedulers.mainThread().scheduleDirect(() -> {
+                            connectButton.setText("Connect");
+                            enableByNameOrMacAfterConnection();
+                            directConnectToggle.setEnabled(true);
+                          });
                           Timber.i("Connection error: " + error.getMessage());
                         }
                 );
@@ -238,6 +273,8 @@ public class MainActivity extends AppCompatActivity {
       connection = null;
 
       connectButton.setText("Connect");
+      enableByNameOrMacAfterConnection();
+      directConnectToggle.setEnabled(true);
       Timber.i("Disconnected");
     }
   }
@@ -248,6 +285,8 @@ public class MainActivity extends AppCompatActivity {
       if (!TextUtils.isEmpty(name)) {
         Timber.i("Connect to:  " + name);
         connectButton.setText("Cancel");
+        nameOrMacToggle.setEnabled(false);
+        directConnectToggle.setEnabled(false);
 
         ScanMatcher scanMatcher = new NameScanMatcher(name);
         connection = scanner
@@ -279,7 +318,11 @@ public class MainActivity extends AppCompatActivity {
                           connection.dispose();
                           connection = null;
 
-                          AndroidSchedulers.mainThread().scheduleDirect(() -> connectButton.setText("Connect"));
+                          AndroidSchedulers.mainThread().scheduleDirect(() -> {
+                            connectButton.setText("Connect");
+                            enableByNameOrMacAfterConnection();
+                            directConnectToggle.setEnabled(true);
+                          });
                           Timber.i("Connection error: " + error.getMessage());
                         }
                 );
@@ -290,7 +333,13 @@ public class MainActivity extends AppCompatActivity {
       connection = null;
 
       connectButton.setText("Connect");
+      enableByNameOrMacAfterConnection();
+      directConnectToggle.setEnabled(true);
       Timber.i("Disconnected");
     }
+  }
+
+  private void enableByNameOrMacAfterConnection() {
+    nameOrMacToggle.setEnabled(!directConnectToggle.isChecked());
   }
 }
