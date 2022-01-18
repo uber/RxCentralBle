@@ -876,6 +876,16 @@ public class CorePeripheralTest {
           ConnectionError error = (ConnectionError) throwable;
           return error != null && error.getCode() == DISCONNECTION;
         });
+    verify(bluetoothGatt, never()).close();
+  }
+
+  @Test
+  public void disconnect_notConnected() {
+    prepareConnect(false);
+
+    corePeripheral.disconnect();
+
+    verify(bluetoothGatt).close();
   }
 
   private void prepareConnect(boolean discoverServiceSuccess) {
