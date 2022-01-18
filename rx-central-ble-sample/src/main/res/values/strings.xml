@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">RxCentralBle Sample</string>
+    <string name="hint_name">name</string>
+    <string name="hint_mac">mac</string>
 </resources>

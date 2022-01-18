@@ -80,6 +80,7 @@ public class CorePeripheral implements Peripheral {
   @Nullable private SingleSubject<Integer> readRssiSubject;
 
   private int mtu = DEFAULT_MTU;
+  private Boolean isConnected = false;
 
   public CorePeripheral(BluetoothDevice device, Context context) {
     this.context = context;
@@ -201,6 +202,9 @@ public class CorePeripheral implements Peripheral {
     synchronized (syncRoot) {
       if (bluetoothGatt != null) {
         bluetoothGatt.disconnect();
+        if (!isConnected) {
+          bluetoothGatt.close();
+        }
         bluetoothGatt = null;
       }
 
@@ -517,6 +521,7 @@ public class CorePeripheral implements Peripheral {
           if (connectionStateSubject != null) {
             if (newState == BluetoothGatt.STATE_CONNECTED) {
               if (status == 0) {
+                isConnected = true;
                 if (!gatt.discoverServices()) {
                   connectionStateSubject.onError(
                       new ConnectionError(
@@ -541,6 +546,7 @@ public class CorePeripheral implements Peripheral {
               }
 
               gatt.close();
+              isConnected = false;
             }
           }
         }

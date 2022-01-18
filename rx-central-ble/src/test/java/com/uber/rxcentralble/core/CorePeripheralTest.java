@@ -69,6 +69,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -147,6 +148,7 @@ public class CorePeripheralTest {
         });
 
     verify(bluetoothGatt).disconnect();
+    verify(bluetoothGatt).close();
   }
 
   @Test
@@ -171,6 +173,7 @@ public class CorePeripheralTest {
         });
 
     verify(bluetoothGatt).disconnect();
+    verify(bluetoothGatt, never()).close();
   }
 
   @Test
@@ -199,6 +202,7 @@ public class CorePeripheralTest {
         });
 
     verify(bluetoothGatt).disconnect();
+    verify(bluetoothGatt, never()).close();
   }
 
   @Test
@@ -872,6 +876,16 @@ public class CorePeripheralTest {
           ConnectionError error = (ConnectionError) throwable;
           return error != null && error.getCode() == DISCONNECTION;
         });
+    verify(bluetoothGatt, never()).close();
+  }
+
+  @Test
+  public void disconnect_notConnected() {
+    prepareConnect(false);
+
+    corePeripheral.disconnect();
+
+    verify(bluetoothGatt).close();
   }
 
   private void prepareConnect(boolean discoverServiceSuccess) {
