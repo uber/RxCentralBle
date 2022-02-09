@@ -1,5 +1,6 @@
 package com.uber.rxcentralble.sample;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -31,6 +32,7 @@ import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import pub.devrel.easypermissions.EasyPermissions;
 import timber.log.Timber;
 
 import static com.uber.rxcentralble.ConnectionManager.DEFAULT_CONNECTION_TIMEOUT;
@@ -80,7 +82,26 @@ public class MainActivity extends AppCompatActivity {
               .subscribe(message -> Timber.d(message));
     }
 
+    String[] perms = {
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.BLUETOOTH_CONNECT,
+        Manifest.permission.BLUETOOTH_SCAN
+    };
+
+    if (!EasyPermissions.hasPermissions(this, perms)) {
+      EasyPermissions.requestPermissions(this, "Permissions", 99, perms);
+    }
+
     logTextView.setMovementMethod(new ScrollingMovementMethod());
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+    // Forward results to EasyPermissions
+    EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
   }
 
   @OnClick(R.id.buttonConnect)
@@ -195,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
-  private void connect() {
+  private void directConnect() {
     if (connection == null) {
       String name = nameEditText.getEditableText().toString();
       if (!TextUtils.isEmpty(name)) {
@@ -242,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
-  private void directConnect() {
+  private void connect() {
     if (connection == null) {
       String name = nameEditText.getEditableText().toString();
       if (!TextUtils.isEmpty(name)) {

@@ -18,7 +18,6 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion deps.build.compileSdkVersion
-    buildToolsVersion deps.build.buildToolsVersion
 
     defaultConfig {
         minSdkVersion deps.build.minSdkVersion
@@ -55,9 +54,10 @@ dependencies {
     implementation deps.support.core
     implementation deps.misc.timber
 
-    implementation 'com.jakewharton:butterknife:9.0.0-rc1'
-    annotationProcessor 'com.jakewharton:butterknife-compiler:9.0.0-rc1'
+    implementation 'com.jakewharton:butterknife:10.2.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'pub.devrel:easypermissions:3.0.0'
 
     api deps.rx.java
     api deps.rx.android
