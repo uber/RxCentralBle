@@ -28,7 +28,6 @@ import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.ScanData;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
