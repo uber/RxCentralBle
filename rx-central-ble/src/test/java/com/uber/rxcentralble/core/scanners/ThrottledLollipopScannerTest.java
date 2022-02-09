@@ -230,7 +230,7 @@ public class ThrottledLollipopScannerTest {
   }
 
   @Test
-  @Ignore // This is acting flaky on Github Action CI, but runs fine locally.
+  //@Ignore // This is acting flaky on Github Action CI, but runs fine locally.
   public void scan_latency_throttling() {
     when(bluetoothAdapter.isEnabled()).thenReturn(true);
     when(BluetoothAdapter.getDefaultAdapter()).thenReturn(bluetoothAdapter);

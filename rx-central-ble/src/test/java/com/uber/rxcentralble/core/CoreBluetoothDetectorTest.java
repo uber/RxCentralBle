@@ -37,6 +37,8 @@ import org.robolectric.RobolectricTestRunner;
 
 import io.reactivex.observers.TestObserver;
 
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -44,7 +46,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @RunWith(RobolectricTestRunner.class)
-@PowerMockIgnore({"org.powermock.*", "org.mockito.*", "org.robolectric.*", "android.*"})
+//@PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*", "org.powermock.*", "org.mockito.*", "org.robolectric.*", "android.*"})
 @PrepareForTest({BluetoothAdapter.class})
 public class CoreBluetoothDetectorTest {
 
@@ -54,6 +56,7 @@ public class CoreBluetoothDetectorTest {
   @Mock Context context;
   @Mock BluetoothAdapter bluetoothAdapter;
   @Mock IntentFilter intentFilter;
+  @Mock Intent bleIntent;
 
   CoreBluetoothDetector coreBluetoothDetector;
   TestObserver<Boolean> enabledTestObserver;
@@ -116,10 +119,9 @@ public class CoreBluetoothDetectorTest {
     ArgumentCaptor<BroadcastReceiver> argument = ArgumentCaptor.forClass(BroadcastReceiver.class);
     verify(context).registerReceiver(argument.capture(), any());
 
-    Intent intent = new Intent();
-    intent.putExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_ON);
-    intent.setAction(BluetoothAdapter.ACTION_STATE_CHANGED);
-    argument.getValue().onReceive(context, intent);
+    when(bleIntent.getAction()).thenReturn(BluetoothAdapter.ACTION_STATE_CHANGED);
+    when(bleIntent.getIntExtra(anyString(), anyInt())).thenReturn(BluetoothAdapter.STATE_ON);
+    argument.getValue().onReceive(context, bleIntent);
 
     enabledTestObserver.assertValues(false, true);
     capabilityTestObserver.assertValues(
