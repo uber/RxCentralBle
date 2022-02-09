@@ -61,3 +61,9 @@ Version 1.2.1
 ----------------------------
 
 * Jetify dependencies, migrate to androidx
+
+Version 1.2.2
+----------------------------
+
+* Android 12 and JDK 11
+
