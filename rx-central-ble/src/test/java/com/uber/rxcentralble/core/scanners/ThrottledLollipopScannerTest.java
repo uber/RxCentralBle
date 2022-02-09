@@ -28,6 +28,7 @@ import com.uber.rxcentralble.ParsedAdvertisement;
 import com.uber.rxcentralble.ScanData;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -229,7 +230,7 @@ public class ThrottledLollipopScannerTest {
   }
 
   @Test
-  //@Ignore // This is acting flaky on Github Action CI, but runs fine locally.
+  @Ignore // This is acting flaky on Github Action CI, but runs fine locally.
   public void scan_latency_throttling() {
     when(bluetoothAdapter.isEnabled()).thenReturn(true);
     when(BluetoothAdapter.getDefaultAdapter()).thenReturn(bluetoothAdapter);

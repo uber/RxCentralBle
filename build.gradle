@@ -43,4 +43,7 @@ task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
+tasks.findByPath(":rx-central-ble:androidJavadocs").enabled = false
+tasks.findByPath(":rx-central-ble:androidJavadocs").enabled = false
+
 apply from: 'gradle/dependencies.gradle'
